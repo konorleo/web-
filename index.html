@@ -1,31 +1,59 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Угадай число</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+        #game {
+            margin-top: 20px;
+        }
+        #result {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
-    <h1>Меню</h1>
-    <h2>Завтрак</h2>
-    <ul>
-        <li>Четкий кофе</li>
-        <li>Омлетик со всеми видами колбасы и сыра</li>
-        <li>Бутербродик с красной икрой (можно и с чёрной)</li>
-        <li>И ещё Четкий кофе с пироженкой</li>
-    </ul>
-    <h2>Обед</h2>
-    <ul>
-        <li>Салатик Цезарь</li>
-        <li>На попить мохито (можно и с градусом)</li>
-        <li>Пасту (карбонару)</li>
-    </ul>
-    <h2>Ужин</h2>
-    <ul>
-        <li>Лимонадик (Кирилловский желательно)</li>
-        <li>Пицца (какая по кайфу )</li>
-        <li>Стейк вагю (либо креветки, а лучше крaба)</li>
-        <li>Бомбовую пироженку с чайком</li>
-    </ul>
+    <h1>Угадай число от 1 до 100</h1>
+    <div id="game">
+        <input type="number" id="guess" placeholder="Введите число">
+        <button onclick="checkGuess()">Проверить</button>
+    </div>
+    <div id="result"></div>
+
+    <script>
+        // Генерация случайного числа
+        const secretNumber = Math.floor(Math.random() * 100) + 1;
+
+        function checkGuess() {
+            const guess = parseInt(document.getElementById('guess').value);
+            const resultDiv = document.getElementById('result');
+
+            if (guess === secretNumber) {
+                resultDiv.textContent = "Поздравляем! Вы угадали число!";
+                resultDiv.style.color = "green";
+                sendResultToBot("Победа! Число было " + secretNumber);
+            } else if (guess < secretNumber) {
+                resultDiv.textContent = "Слишком маленькое число!";
+                resultDiv.style.color = "red";
+            } else {
+                resultDiv.textContent = "Слишком большое число!";
+                resultDiv.style.color = "red";
+            }
+        }
+
+        // Отправка результата в бота
+        function sendResultToBot(message) {
+            if (Telegram.WebApp) {
+                Telegram.WebApp.sendData(message);
+            }
+        }
+    </script>
 </body>
 </html>
