@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тетрис</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background: #34495e;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+        canvas {
+            background: #2c3e50;
+            border: 2px solid #34495e;
+        }
+        .controls {
+            margin-top: 20px;
+        }
+        .controls button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .controls button:hover {
+            background: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Тетрис</h1>
+        <canvas id="tetris" width="300" height="600"></canvas>
+        <div class="controls">
+            <button onclick="startGame()">Старт</button>
+            <button onclick="pauseGame()">Пауза</button>
+            <button onclick="restartGame()">Рестарт</button>
+        </div>
+    </div>
+    <script>
+        const canvas = document.getElementById('tetris');
+        const context = canvas.getContext('2d');
+        const scale = 30;
+        const rows = canvas.height / scale;
+        const columns = canvas.width / scale;
+
+        let tetromino;
+        let score = 0;
+        let isPaused = false;
+
+        const tetrominoes = [
+            [[1, 1, 1, 1]], // I
+            [[1, 1], [1, 1]], // O
+            [[0, 1, 0], [1, 1, 1]], // T
+            [[1, 1, 0], [0, 1, 1]], // S
+            [[0, 1, 1], [1, 1, 0]], // Z
+            [[1, 0, 0], [1, 1, 1]], // L
+            [[0, 0, 1], [1, 1, 1]] // J
+        ];
+
+        function createTetromino() {
+            const random = Math.floor(Math.random() * tetrominoes.length);
+            return tetrominoes[random];
+        }
+
+        function drawTetromino() {
+            context.fillStyle = '#3498db';
+            tetromino.forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (value) {
+                        context.fillRect(x * scale, y * scale, scale, scale);
+                    }
+                });
+            });
+        }
+
+        function update() {
+            if (isPaused) return;
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            drawTetromino();
+            requestAnimationFrame(update);
+        }
+
+        function startGame() {
+            tetromino = createTetromino();
+            isPaused = false;
+            update();
+        }
+
+        function pauseGame() {
+            isPaused = !isPaused;
+            if (!isPaused) update();
+        }
+
+        function restartGame() {
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            tetromino = createTetromino();
+            isPaused = false;
+            update();
+        }
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'ArrowLeft') {
+                // Движение влево
+            } else if (event.key === 'ArrowRight') {
+                // Движение вправо
+            } else if (event.key === 'ArrowDown') {
+                // Ускорение вниз
+            } else if (event.key === 'ArrowUp') {
+                // Поворот фигуры
+            }
+        });
+    </script>
+</body>
+</html>
