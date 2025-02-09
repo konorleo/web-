@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Пазлы</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background: #34495e;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+        .puzzle-container {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            gap: 5px;
+        }
+        .puzzle-piece {
+            width: 100px;
+            height: 100px;
+            background: #3498db;
+            border: 2px solid #2980b9;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Сборка пазлов</h1>
+        <div class="puzzle-container" id="puzzle-container">
+            <!-- Пазлы будут добавлены сюда -->
+        </div>
+    </div>
+    <script>
+        const images = [
+            'image1.jpg', 'image2.jpg', 'image3.jpg', 'image4.jpg', 'image5.jpg',
+            'image6.jpg', 'image7.jpg', 'image8.jpg', 'image9.jpg', 'image10.jpg'
+        ];
+
+        const puzzleContainer = document.getElementById('puzzle-container');
+        let selectedImage = images[Math.floor(Math.random() * images.length)];
+
+        function createPuzzle() {
+            for (let i = 0; i < 9; i++) {
+                const piece = document.createElement('div');
+                piece.classList.add('puzzle-piece');
+                piece.style.backgroundImage = `url(${selectedImage})`;
+                piece.style.backgroundPosition = `${-(i % 3) * 100}px ${-Math.floor(i / 3) * 100}px`;
+                puzzleContainer.appendChild(piece);
+            }
+        }
+
+        createPuzzle();
+    </script>
+</body>
+</html>
