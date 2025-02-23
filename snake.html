@@ -6,93 +6,106 @@
     <title>Змейка</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background: #2c3e50;
-            color: white;
-            text-align: center;
-            margin: 0;
-            padding: 0;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-        }
-        .container {
-            background: #34495e;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-        }
-        h1 {
-            font-size: 2rem;
-            margin-bottom: 20px;
+            margin: 0;
+            background-color: #f0f0f0;
         }
         canvas {
-            background: #2c3e50;
-            border: 2px solid #34495e;
+            border: 1px solid #000;
+            background-color: #fff;
+        }
+        .game-menu {
+            text-align: center;
+            margin-right: 20px;
+        }
+        .game-menu h2 {
+            margin-bottom: 10px;
+            font-size: 20px;
+        }
+        .game-menu button {
+            padding: 10px;
+            margin: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #4CAF50;
+            color: white;
+        }
+        .game-menu button:hover {
+            background-color: #45a049;
+        }
+        @media (max-width: 600px) {
+            body {
+                flex-direction: column;
+            }
+            .game-menu {
+                margin-right: 0;
+                margin-bottom: 20px;
+            }
+            canvas {
+                width: 90%;
+                height: auto;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Змейка</h1>
-        <canvas id="snake" width="400" height="400"></canvas>
+    <div class="game-menu">
+        <h2>Змейка</h2>
+        <button onclick="startGame()">Начать игру</button>
+        <button onclick="pauseGame()">Пауза</button>
+        <button onclick="resetGame()">Перезапустить</button>
+        <button onclick="window.location.href='index.html'">Выбрать другую игру</button>
+        <p>Счёт: <span id="score">0</span></p>
     </div>
+    <canvas id="snakeCanvas" width="300" height="300"></canvas>
+
     <script>
-        const canvas = document.getElementById('snake');
-        const context = canvas.getContext('2d');
-        const scale = 20;
-        const rows = canvas.height / scale;
-        const columns = canvas.width / scale;
+        const canvas = document.getElementById('snakeCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
 
-        let snake;
-        let food;
-        let direction;
+        let score = 0;
+        let gameStarted = false;
+        let gamePaused = false;
 
-        function init() {
-            snake = [{ x: 10, y: 10 }];
-            food = { x: Math.floor(Math.random() * columns), y: Math.floor(Math.random() * rows) };
-            direction = { x: 0, y: 0 };
+        function startGame() {
+            if (!gameStarted) {
+                gameStarted = true;
+                console.log("Игра начата");
+                gameLoop();
+            }
+        }
+
+        function pauseGame() {
+            if (gameStarted) {
+                gamePaused = !gamePaused;
+                console.log(gamePaused ? "Игра на паузе" : "Игра возобновлена");
+            }
+        }
+
+        function resetGame() {
+            gameStarted = false;
+            gamePaused = false;
+            score = 0;
+            scoreElement.textContent = score;
+            console.log("Игра перезапущена");
         }
 
         function draw() {
-            context.clearRect(0, 0, canvas.width, canvas.height);
-            context.fillStyle = '#3498db';
-            snake.forEach(segment => context.fillRect(segment.x * scale, segment.y * scale, scale, scale));
-            context.fillStyle = '#e74c3c';
-            context.fillRect(food.x * scale, food.y * scale, scale, scale);
-        }
-
-        function update() {
-            const head = { x: snake[0].x + direction.x, y: snake[0].y + direction.y };
-            snake.unshift(head);
-            if (head.x === food.x && head.y === food.y) {
-                food = { x: Math.floor(Math.random() * columns), y: Math.floor(Math.random() * rows) };
-            } else {
-                snake.pop();
-            }
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Здесь будет отрисовка змейки и еды
         }
 
         function gameLoop() {
-            update();
+            if (!gameStarted || gamePaused) return;
             draw();
-            setTimeout(gameLoop, 100);
+            requestAnimationFrame(gameLoop);
         }
-
-        document.addEventListener('keydown', (event) => {
-            if (event.key === 'ArrowUp' && direction.y === 0) {
-                direction = { x: 0, y: -1 };
-            } else if (event.key === 'ArrowDown' && direction.y === 0) {
-                direction = { x: 0, y: 1 };
-            } else if (event.key === 'ArrowLeft' && direction.x === 0) {
-                direction = { x: -1, y: 0 };
-            } else if (event.key === 'ArrowRight' && direction.x === 0) {
-                direction = { x: 1, y: 0 };
-            }
-        });
-
-        init();
-        gameLoop();
     </script>
 </body>
 </html>
