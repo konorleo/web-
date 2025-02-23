@@ -12,10 +12,18 @@
             height: 100vh;
             margin: 0;
             background-color: #f0f0f0;
+            overflow: hidden;
+        }
+        .container {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
         }
         canvas {
             border: 1px solid #000;
             background-color: #fff;
+            max-width: 100%;
+            height: auto;
         }
         .game-menu {
             text-align: center;
@@ -23,55 +31,76 @@
         }
         .game-menu h2 {
             margin-bottom: 10px;
-            font-size: 20px;
+            font-size: clamp(16px, 4vw, 20px);
         }
-        .game-menu button {
+        .game-menu button, .touch-controls button {
             padding: 10px;
             margin: 5px;
-            font-size: 16px;
+            font-size: clamp(12px, 3vw, 16px);
             cursor: pointer;
             border: none;
             border-radius: 5px;
             background-color: #4CAF50;
             color: white;
+            width: 100%;
+            max-width: 150px;
         }
-        .game-menu button:hover {
+        .game-menu button:hover, .touch-controls button:hover {
             background-color: #45a049;
         }
+        .touch-controls {
+            display: none;
+            margin-top: 10px;
+        }
         @media (max-width: 600px) {
-            body {
+            .container {
                 flex-direction: column;
             }
             .game-menu {
                 margin-right: 0;
-                margin-bottom: 20px;
+                margin-bottom: 10px;
             }
             canvas {
-                width: 90%;
-                height: auto;
+                width: 80vw;
+                height: 130vw;
+            }
+            .touch-controls {
+                display: flex;
+                justify-content: space-between;
+                width: 80vw;
             }
         }
     </style>
 </head>
 <body>
-    <div class="game-menu">
-        <h2>Doodle Jump</h2>
-        <button onclick="startGame()">Начать игру</button>
-        <button onclick="pauseGame()">Пауза</button>
-        <button onclick="resetGame()">Перезапустить</button>
-        <button onclick="window.location.href='index.html'">Выбрать другую игру</button>
-        <p>Счёт: <span id="score">0</span></p>
+    <div class="container">
+        <div class="game-menu">
+            <h2>Doodle Jump</h2>
+            <button onclick="startGame()">Начать игру</button>
+            <button onclick="pauseGame()">Пауза</button>
+            <button onclick="resetGame()">Перезапустить</button>
+            <button onclick="window.location.href='index.html'">Выбрать другую игру</button>
+            <p>Счёт: <span id="score">0</span></p>
+            <div class="touch-controls">
+                <button onclick="moveLeft()">←</button>
+                <button onclick="moveRight()">→</button>
+            </div>
+        </div>
+        <canvas id="doodleCanvas"></canvas>
     </div>
-    <canvas id="doodleCanvas" width="300" height="500"></canvas>
 
     <script>
         const canvas = document.getElementById('doodleCanvas');
         const ctx = canvas.getContext('2d');
         const scoreElement = document.getElementById('score');
 
-        const player = { x: 150, y: 400, width: 20, height: 20, dy: 0, speed: 5 };
-        const platforms = [{ x: 130, y: 450, width: 60, height: 10 }];
-        const GRAVITY = 0.5;
+        const SCALE = window.innerWidth <= 600 ? window.innerWidth * 0.002 : 1;
+        canvas.width = 300 * SCALE;
+        canvas.height = 500 * SCALE;
+
+        const player = { x: canvas.width / 2, y: canvas.height - 100, width: 20 * SCALE, height: 20 * SCALE, dy: 0, speed: 5 * SCALE };
+        const platforms = [{ x: canvas.width / 2 - 30 * SCALE, y: canvas.height - 50, width: 60 * SCALE, height: 10 * SCALE }];
+        const GRAVITY = 0.5 * SCALE;
         let score = 0;
         let gameStarted = false;
         let gamePaused = false;
@@ -80,7 +109,7 @@
             if (!gameStarted) {
                 gameStarted = true;
                 spawnPlatforms();
-                gameLoop();
+                requestAnimationFrame(gameLoop);
             }
         }
 
@@ -93,21 +122,21 @@
             gamePaused = false;
             score = 0;
             scoreElement.textContent = score;
-            player.x = 150;
-            player.y = 400;
+            player.x = canvas.width / 2;
+            player.y = canvas.height - 100;
             player.dy = 0;
             platforms.length = 1;
-            platforms[0] = { x: 130, y: 450, width: 60, height: 10 };
+            platforms[0] = { x: canvas.width / 2 - 30 * SCALE, y: canvas.height - 50, width: 60 * SCALE, height: 10 * SCALE };
         }
 
         function spawnPlatforms() {
             while (platforms.length < 6) {
                 const last = platforms[platforms.length - 1];
                 platforms.push({
-                    x: Math.random() * (canvas.width - 60),
-                    y: last.y - Math.random() * 100 - 50,
-                    width: 60,
-                    height: 10
+                    x: Math.random() * (canvas.width - 60 * SCALE),
+                    y: last.y - (50 + Math.random() * 100) * SCALE,
+                    width: 60 * SCALE,
+                    height: 10 * SCALE
                 });
             }
         }
@@ -119,7 +148,7 @@
             if (player.y < canvas.height / 2) {
                 platforms.forEach(p => p.y += -player.dy);
                 score += Math.abs(player.dy);
-                scoreElement.textContent = Math.floor(score / 100);
+                scoreElement.textContent = Math.floor(score / (100 * SCALE));
                 if (platforms[0].y > canvas.height) platforms.shift();
                 spawnPlatforms();
             }
@@ -127,8 +156,8 @@
             platforms.forEach(p => {
                 if (player.dy > 0 &&
                     player.x + player.width > p.x && player.x < p.x + p.width &&
-                    player.y + player.height > p.y && player.y + player.height < p.y + p.height + 10) {
-                    player.dy = -10;
+                    player.y + player.height > p.y && player.y + player.height < p.y + p.height + 10 * SCALE) {
+                    player.dy = -10 * SCALE;
                 }
             });
 
@@ -155,13 +184,25 @@
             requestAnimationFrame(gameLoop);
         }
 
+        // Управление для ПК
         document.addEventListener('keydown', (e) => {
             if (!gameStarted || gamePaused) return;
             switch (e.key) {
-                case 'ArrowLeft': player.x -= player.speed; break;
-                case 'ArrowRight': player.x += player.speed; break;
+                case 'ArrowLeft': moveLeft(); break;
+                case 'ArrowRight': moveRight(); break;
             }
         });
+
+        // Управление для телефона
+        function moveLeft() {
+            if (!gameStarted || gamePaused) return;
+            player.x -= player.speed;
+        }
+
+        function moveRight() {
+            if (!gameStarted || gamePaused) return;
+            player.x += player.speed;
+        }
     </script>
 </body>
 </html>
