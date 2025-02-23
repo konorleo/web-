@@ -12,10 +12,18 @@
             height: 100vh;
             margin: 0;
             background-color: #f0f0f0;
+            overflow: hidden;
+        }
+        .container {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
         }
         canvas {
             border: 1px solid #000;
             background-color: #fff;
+            max-width: 100%;
+            height: auto;
         }
         .game-menu {
             text-align: center;
@@ -23,56 +31,85 @@
         }
         .game-menu h2 {
             margin-bottom: 10px;
-            font-size: 20px;
+            font-size: clamp(16px, 4vw, 20px);
         }
-        .game-menu button {
+        .game-menu button, .touch-controls button {
             padding: 10px;
             margin: 5px;
-            font-size: 16px;
+            font-size: clamp(12px, 3vw, 16px);
             cursor: pointer;
             border: none;
             border-radius: 5px;
             background-color: #4CAF50;
             color: white;
+            width: 100%;
+            max-width: 150px;
         }
-        .game-menu button:hover {
+        .game-menu button:hover, .touch-controls button:hover {
             background-color: #45a049;
         }
+        .touch-controls {
+            display: none;
+            margin-top: 10px;
+        }
         @media (max-width: 600px) {
-            body {
+            .container {
                 flex-direction: column;
             }
             .game-menu {
                 margin-right: 0;
-                margin-bottom: 20px;
+                margin-bottom: 10px;
             }
             canvas {
-                width: 90%;
-                height: auto;
+                width: 80vw;
+                height: 80vw;
+            }
+            .touch-controls {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 5px;
+                width: 80vw;
+            }
+            .touch-controls .up {
+                grid-column: 2;
+            }
+            .touch-controls .down {
+                grid-column: 2;
             }
         }
     </style>
 </head>
 <body>
-    <div class="game-menu">
-        <h2>Змейка</h2>
-        <button onclick="startGame()">Начать игру</button>
-        <button onclick="pauseGame()">Пауза</button>
-        <button onclick="resetGame()">Перезапустить</button>
-        <button onclick="window.location.href='index.html'">Выбрать другую игру</button>
-        <p>Счёт: <span id="score">0</span></p>
+    <div class="container">
+        <div class="game-menu">
+            <h2>Змейка</h2>
+            <button onclick="startGame()">Начать игру</button>
+            <button onclick="pauseGame()">Пауза</button>
+            <button onclick="resetGame()">Перезапустить</button>
+            <button onclick="window.location.href='index.html'">Выбрать другую игру</button>
+            <p>Счёт: <span id="score">0</span></p>
+            <div class="touch-controls">
+                <button class="up" onclick="moveUp()">↑</button>
+                <button onclick="moveLeft()">←</button>
+                <button onclick="moveRight()">→</button>
+                <button class="down" onclick="moveDown()">↓</button>
+            </div>
+        </div>
+        <canvas id="snakeCanvas"></canvas>
     </div>
-    <canvas id="snakeCanvas" width="300" height="300"></canvas>
 
     <script>
         const canvas = document.getElementById('snakeCanvas');
         const ctx = canvas.getContext('2d');
         const scoreElement = document.getElementById('score');
 
-        const GRID_SIZE = 20;
-        const TILE_COUNT = canvas.width / GRID_SIZE;
-        let snake = [{ x: 10, y: 10 }];
-        let food = { x: 15, y: 15 };
+        const GRID_SIZE = window.innerWidth <= 600 ? Math.floor(window.innerWidth * 0.08) : 20;
+        const TILE_COUNT = 15;
+        canvas.width = TILE_COUNT * GRID_SIZE;
+        canvas.height = TILE_COUNT * GRID_SIZE;
+
+        let snake = [{ x: 7, y: 7 }];
+        let food = { x: 10, y: 10 };
         let dx = 0;
         let dy = 0;
         let score = 0;
@@ -85,7 +122,7 @@
                 gameStarted = true;
                 dx = 1; // Начальное движение вправо
                 dy = 0;
-                gameLoop(0);
+                requestAnimationFrame(gameLoop);
             }
         }
 
@@ -98,8 +135,8 @@
             gamePaused = false;
             score = 0;
             scoreElement.textContent = score;
-            snake = [{ x: 10, y: 10 }];
-            food = { x: 15, y: 15 };
+            snake = [{ x: 7, y: 7 }];
+            food = { x: 10, y: 10 };
             dx = 0;
             dy = 0;
         }
@@ -131,7 +168,8 @@
 
         function gameLoop(timestamp) {
             if (!gameStarted || gamePaused) return requestAnimationFrame(gameLoop);
-            if (timestamp - lastTime > 100) {
+            if (!lastTime) lastTime = timestamp;
+            if (timestamp - lastTime > 150) {
                 moveSnake();
                 lastTime = timestamp;
             }
@@ -139,15 +177,41 @@
             requestAnimationFrame(gameLoop);
         }
 
+        // Управление для ПК
         document.addEventListener('keydown', (e) => {
             if (!gameStarted || gamePaused) return;
             switch (e.key) {
-                case 'ArrowUp': if (dy !== 1) { dx = 0; dy = -1; } break;
-                case 'ArrowDown': if (dy !== -1) { dx = 0; dy = 1; } break;
-                case 'ArrowLeft': if (dx !== 1) { dx = -1; dy = 0; } break;
-                case 'ArrowRight': if (dx !== -1) { dx = 1; dy = 0; } break;
+                case 'ArrowUp': moveUp(); break;
+                case 'ArrowDown': moveDown(); break;
+                case 'ArrowLeft': moveLeft(); break;
+                case 'ArrowRight': moveRight(); break;
             }
         });
+
+        // Управление для телефона
+        function moveUp() {
+            if (!gameStarted || gamePaused || dy === 1) return;
+            dx = 0;
+            dy = -1;
+        }
+
+        function moveDown() {
+            if (!gameStarted || gamePaused || dy === -1) return;
+            dx = 0;
+            dy = 1;
+        }
+
+        function moveLeft() {
+            if (!gameStarted || gamePaused || dx === 1) return;
+            dx = -1;
+            dy = 0;
+        }
+
+        function moveRight() {
+            if (!gameStarted || gamePaused || dx === -1) return;
+            dx = 1;
+            dy = 0;
+        }
     </script>
 </body>
 </html>
