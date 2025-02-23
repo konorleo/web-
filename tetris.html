@@ -69,26 +69,38 @@
         const ctx = canvas.getContext('2d');
         const scoreElement = document.getElementById('score');
 
-        // Цвета фигурок
+        const ROWS = 20;
+        const COLS = 10;
+        const BLOCK_SIZE = 20;
         const colors = ['cyan', 'blue', 'orange', 'yellow', 'green', 'purple', 'red'];
+        const SHAPES = [
+            [[1, 1, 1, 1]], // I
+            [[1, 1], [1, 1]], // O
+            [[1, 1, 1], [0, 1, 0]], // T
+            [[1, 1, 1], [1, 0, 0]], // L
+            [[1, 1, 1], [0, 0, 1]], // J
+            [[1, 1, 0], [0, 1, 1]], // S
+            [[0, 1, 1], [1, 1, 0]] // Z
+        ];
+
         let score = 0;
-        let board = Array(20).fill().map(() => Array(10).fill(0));
+        let board = Array(ROWS).fill().map(() => Array(COLS).fill(0));
         let gameStarted = false;
         let gamePaused = false;
+        let currentPiece = null;
+        let currentX, currentY;
+        let lastTime = 0;
 
         function startGame() {
             if (!gameStarted) {
                 gameStarted = true;
-                console.log("Игра начата");
-                gameLoop();
+                spawnPiece();
+                gameLoop(0);
             }
         }
 
         function pauseGame() {
-            if (gameStarted) {
-                gamePaused = !gamePaused;
-                console.log(gamePaused ? "Игра на паузе" : "Игра возобновлена");
-            }
+            if (gameStarted) gamePaused = !gamePaused;
         }
 
         function resetGame() {
@@ -96,22 +108,114 @@
             gamePaused = false;
             score = 0;
             scoreElement.textContent = score;
-            board = Array(20).fill().map(() => Array(10).fill(0));
-            console.log("Игра перезапущена");
+            board = Array(ROWS).fill().map(() => Array(COLS).fill(0));
+            currentPiece = null;
+        }
+
+        function spawnPiece() {
+            const shapeIdx = Math.floor(Math.random() * SHAPES.length);
+            currentPiece = SHAPES[shapeIdx];
+            currentX = Math.floor(COLS / 2) - Math.floor(currentPiece[0].length / 2);
+            currentY = 0;
+            if (collides()) {
+                resetGame();
+                alert("Игра окончена!");
+            }
+        }
+
+        function collides() {
+            for (let y = 0; y < currentPiece.length; y++) {
+                for (let x = 0; x < currentPiece[y].length; x++) {
+                    if (currentPiece[y][x] && (
+                        currentY + y >= ROWS ||
+                        currentX + x < 0 ||
+                        currentX + x >= COLS ||
+                        (currentY + y >= 0 && board[currentY + y][currentX + x])
+                    )) return true;
+                }
+            }
+            return false;
+        }
+
+        function merge() {
+            for (let y = 0; y < currentPiece.length; y++) {
+                for (let x = 0; x < currentPiece[y].length; x++) {
+                    if (currentPiece[y][x]) {
+                        board[currentY + y][currentX + x] = SHAPES.indexOf(currentPiece) + 1;
+                    }
+                }
+            }
+        }
+
+        function clearLines() {
+            for (let y = ROWS - 1; y >= 0; y--) {
+                if (board[y].every(cell => cell)) {
+                    board.splice(y, 1);
+                    board.unshift(Array(COLS).fill(0));
+                    score += 10;
+                    scoreElement.textContent = score;
+                }
+            }
         }
 
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            // Здесь будет отрисовка поля и фигурок
+            for (let y = 0; y < ROWS; y++) {
+                for (let x = 0; x < COLS; x++) {
+                    if (board[y][x]) {
+                        ctx.fillStyle = colors[board[y][x] - 1];
+                        ctx.fillRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE - 1, BLOCK_SIZE - 1);
+                    }
+                }
+            }
+            if (currentPiece) {
+                ctx.fillStyle = colors[SHAPES.indexOf(currentPiece)];
+                for (let y = 0; y < currentPiece.length; y++) {
+                    for (let x = 0; x < currentPiece[y].length; x++) {
+                        if (currentPiece[y][x]) {
+                            ctx.fillRect((currentX + x) * BLOCK_SIZE, (currentY + y) * BLOCK_SIZE, BLOCK_SIZE - 1, BLOCK_SIZE - 1);
+                        }
+                    }
+                }
+            }
         }
 
-        function gameLoop() {
-            if (!gameStarted || gamePaused) return;
+        function drop() {
+            currentY++;
+            if (collides()) {
+                currentY--;
+                merge();
+                clearLines();
+                spawnPiece();
+            }
+        }
+
+        function gameLoop(timestamp) {
+            if (!gameStarted || gamePaused) return requestAnimationFrame(gameLoop);
+            if (timestamp - lastTime > 500) {
+                drop();
+                lastTime = timestamp;
+            }
             draw();
             requestAnimationFrame(gameLoop);
         }
+
+        document.addEventListener('keydown', (e) => {
+            if (!gameStarted || gamePaused || !currentPiece) return;
+            switch (e.key) {
+                case 'ArrowLeft': currentX--; if (collides()) currentX++; break;
+                case 'ArrowRight': currentX++; if (collides()) currentX--; break;
+                case 'ArrowDown': drop(); break;
+                case 'ArrowUp': rotatePiece(); break;
+            }
+        });
+
+        function rotatePiece() {
+            const rotated = currentPiece[0].map((_, idx) => currentPiece.map(row => row[idx]).reverse());
+            const prevPiece = currentPiece;
+            currentPiece = rotated;
+            if (collides()) currentPiece = prevPiece;
+        }
     </script>
-</body>
-</html>
 </body>
 </html>
