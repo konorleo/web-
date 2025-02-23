@@ -7,48 +7,53 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #6a11cb, #2575fc);
-            color: white;
-            text-align: center;
-            margin: 0;
-            padding: 0;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
         }
-        .container {
-            background: rgba(0, 0, 0, 0.7);
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        .menu {
+            text-align: center;
         }
-        h1 {
-            font-size: 2.5rem;
+        .menu h1 {
             margin-bottom: 20px;
+            font-size: 24px;
         }
-        .game-button {
-            background: #2575fc;
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            margin: 10px;
-            border-radius: 5px;
-            font-size: 1.2rem;
+        .menu button {
+            display: block;
+            width: 200px;
+            padding: 10px;
+            margin: 10px auto;
+            font-size: 18px;
             cursor: pointer;
-            transition: background 0.3s;
+            border: none;
+            border-radius: 5px;
+            background-color: #4CAF50;
+            color: white;
         }
-        .game-button:hover {
-            background: #6a11cb;
+        .menu button:hover {
+            background-color: #45a049;
+        }
+        @media (max-width: 600px) {
+            .menu button {
+                width: 80%;
+            }
+            .menu h1 {
+                font-size: 20px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="menu">
         <h1>Выберите игру</h1>
-        <button class="game-button" onclick="window.location.href='tetris.html'">Тетрис</button>
-        <button class="game-button" onclick="window.location.href='puzzle.html'">Пазлы</button>
-        <button class="game-button" onclick="window.location.href='snake.html'">Змейка</button>
+        <button onclick="window.location.href='tetris.html'">Тетрис</button>
+        <button onclick="window.location.href='doodle_jump.html'">Doodle Jump</button>
+        <button onclick="window.location.href='snake.html'">Змейка</button>
     </div>
+</body>
+</html>
 </body>
 </html>
