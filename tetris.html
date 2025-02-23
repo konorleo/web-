@@ -6,173 +6,110 @@
     <title>Тетрис</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background: #2c3e50;
-            color: white;
-            text-align: center;
-            margin: 0;
-            padding: 0;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            flex-direction: column;
-        }
-        .container {
-            background: #34495e;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-        }
-        h1 {
-            font-size: 2rem;
-            margin-bottom: 20px;
+            margin: 0;
+            background-color: #f0f0f0;
         }
         canvas {
-            background: #2c3e50;
-            border: 2px solid #34495e;
+            border: 1px solid #000;
+            background-color: #fff;
         }
-        .controls {
-            margin-top: 20px;
+        .game-menu {
+            text-align: center;
+            margin-right: 20px;
         }
-        .controls button {
-            background: #3498db;
-            color: white;
-            border: none;
-            padding: 10px 20px;
+        .game-menu h2 {
+            margin-bottom: 10px;
+            font-size: 20px;
+        }
+        .game-menu button {
+            padding: 10px;
             margin: 5px;
-            border-radius: 5px;
-            font-size: 1rem;
+            font-size: 16px;
             cursor: pointer;
-            transition: background 0.3s;
+            border: none;
+            border-radius: 5px;
+            background-color: #4CAF50;
+            color: white;
         }
-        .controls button:hover {
-            background: #2980b9;
+        .game-menu button:hover {
+            background-color: #45a049;
         }
-        .score {
-            margin-top: 20px;
-            font-size: 1.5rem;
+        @media (max-width: 600px) {
+            body {
+                flex-direction: column;
+            }
+            .game-menu {
+                margin-right: 0;
+                margin-bottom: 20px;
+            }
+            canvas {
+                width: 90%;
+                height: auto;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Тетрис</h1>
-        <div class="score">Очки: <span id="score">0</span></div>
-        <canvas id="tetris" width="300" height="600"></canvas>
-        <div class="controls">
-            <button onclick="startGame()">Старт</button>
-            <button onclick="pauseGame()">Пауза</button>
-            <button onclick="restartGame()">Рестарт</button>
-        </div>
+    <div class="game-menu">
+        <h2>Тетрис</h2>
+        <button onclick="startGame()">Начать игру</button>
+        <button onclick="pauseGame()">Пауза</button>
+        <button onclick="resetGame()">Перезапустить</button>
+        <button onclick="window.location.href='index.html'">Выбрать другую игру</button>
+        <p>Счёт: <span id="score">0</span></p>
     </div>
+    <canvas id="tetrisCanvas" width="200" height="400"></canvas>
+
     <script>
-        const canvas = document.getElementById('tetris');
-        const context = canvas.getContext('2d');
-        const scale = 30;
-        const rows = canvas.height / scale;
-        const columns = canvas.width / scale;
+        const canvas = document.getElementById('tetrisCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
 
-        let tetromino;
+        // Цвета фигурок
+        const colors = ['cyan', 'blue', 'orange', 'yellow', 'green', 'purple', 'red'];
         let score = 0;
-        let isPaused = false;
-        let interval;
-
-        const tetrominoes = [
-            [[1, 1, 1, 1]], // I
-            [[1, 1], [1, 1]], // O
-            [[0, 1, 0], [1, 1, 1]], // T
-            [[1, 1, 0], [0, 1, 1]], // S
-            [[0, 1, 1], [1, 1, 0]], // Z
-            [[1, 0, 0], [1, 1, 1]], // L
-            [[0, 0, 1], [1, 1, 1]] // J
-        ];
-
-        function createTetromino() {
-            const random = Math.floor(Math.random() * tetrominoes.length);
-            return {
-                shape: tetrominoes[random],
-                x: Math.floor(columns / 2) - 1,
-                y: 0
-            };
-        }
-
-        function drawTetromino() {
-            context.fillStyle = '#3498db';
-            tetromino.shape.forEach((row, y) => {
-                row.forEach((value, x) => {
-                    if (value) {
-                        context.fillRect((tetromino.x + x) * scale, (tetromino.y + y) * scale, scale, scale);
-                    }
-                });
-            });
-        }
-
-        function update() {
-            if (isPaused) return;
-
-            context.clearRect(0, 0, canvas.width, canvas.height);
-            drawTetromino();
-
-            if (tetromino.y + tetromino.shape.length < rows) {
-                tetromino.y++;
-            } else {
-                score += 10; // Добавляем очки за каждую фигуру
-                document.getElementById('score').textContent = score;
-                tetromino = createTetromino();
-            }
-
-            requestAnimationFrame(update);
-        }
+        let board = Array(20).fill().map(() => Array(10).fill(0));
+        let gameStarted = false;
+        let gamePaused = false;
 
         function startGame() {
-            if (interval) return; // Игра уже запущена
-            tetromino = createTetromino();
-            isPaused = false;
-            interval = setInterval(update, 500);
+            if (!gameStarted) {
+                gameStarted = true;
+                console.log("Игра начата");
+                gameLoop();
+            }
         }
 
         function pauseGame() {
-            isPaused = !isPaused;
-            if (!isPaused) {
-                interval = setInterval(update, 500);
-            } else {
-                clearInterval(interval);
+            if (gameStarted) {
+                gamePaused = !gamePaused;
+                console.log(gamePaused ? "Игра на паузе" : "Игра возобновлена");
             }
         }
 
-        function restartGame() {
-            clearInterval(interval);
-            interval = null;
-            context.clearRect(0, 0, canvas.width, canvas.height);
-            tetromino = createTetromino();
+        function resetGame() {
+            gameStarted = false;
+            gamePaused = false;
             score = 0;
-            document.getElementById('score').textContent = score;
-            isPaused = false;
+            scoreElement.textContent = score;
+            board = Array(20).fill().map(() => Array(10).fill(0));
+            console.log("Игра перезапущена");
         }
 
-        document.addEventListener('keydown', (event) => {
-            if (isPaused) return;
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Здесь будет отрисовка поля и фигурок
+        }
 
-            if (event.key === 'ArrowLeft' && tetromino.x > 0) {
-                tetromino.x--;
-            } else if (event.key === 'ArrowRight' && tetromino.x + tetromino.shape[0].length < columns) {
-                tetromino.x++;
-            } else if (event.key === 'ArrowDown' && tetromino.y + tetromino.shape.length < rows) {
-                tetromino.y++;
-            } else if (event.key === 'ArrowUp') {
-                // Поворот фигуры
-                const rotated = [];
-                for (let x = 0; x < tetromino.shape[0].length; x++) {
-                    const newRow = [];
-                    for (let y = tetromino.shape.length - 1; y >= 0; y--) {
-                        newRow.push(tetromino.shape[y][x]);
-                    }
-                    rotated.push(newRow);
-                }
-                tetromino.shape = rotated;
-            }
-        });
+        function gameLoop() {
+            if (!gameStarted || gamePaused) return;
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
     </script>
 </body>
 </html>
