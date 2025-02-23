@@ -69,6 +69,9 @@
         const ctx = canvas.getContext('2d');
         const scoreElement = document.getElementById('score');
 
+        const player = { x: 150, y: 400, width: 20, height: 20, dy: 0, speed: 5 };
+        const platforms = [{ x: 130, y: 450, width: 60, height: 10 }];
+        const GRAVITY = 0.5;
         let score = 0;
         let gameStarted = false;
         let gamePaused = false;
@@ -76,16 +79,13 @@
         function startGame() {
             if (!gameStarted) {
                 gameStarted = true;
-                console.log("Игра начата");
+                spawnPlatforms();
                 gameLoop();
             }
         }
 
         function pauseGame() {
-            if (gameStarted) {
-                gamePaused = !gamePaused;
-                console.log(gamePaused ? "Игра на паузе" : "Игра возобновлена");
-            }
+            if (gameStarted) gamePaused = !gamePaused;
         }
 
         function resetGame() {
@@ -93,19 +93,75 @@
             gamePaused = false;
             score = 0;
             scoreElement.textContent = score;
-            console.log("Игра перезапущена");
+            player.x = 150;
+            player.y = 400;
+            player.dy = 0;
+            platforms.length = 1;
+            platforms[0] = { x: 130, y: 450, width: 60, height: 10 };
+        }
+
+        function spawnPlatforms() {
+            while (platforms.length < 6) {
+                const last = platforms[platforms.length - 1];
+                platforms.push({
+                    x: Math.random() * (canvas.width - 60),
+                    y: last.y - Math.random() * 100 - 50,
+                    width: 60,
+                    height: 10
+                });
+            }
+        }
+
+        function update() {
+            player.dy += GRAVITY;
+            player.y += player.dy;
+
+            if (player.y < canvas.height / 2) {
+                platforms.forEach(p => p.y += -player.dy);
+                score += Math.abs(player.dy);
+                scoreElement.textContent = Math.floor(score / 100);
+                if (platforms[0].y > canvas.height) platforms.shift();
+                spawnPlatforms();
+            }
+
+            platforms.forEach(p => {
+                if (player.dy > 0 &&
+                    player.x + player.width > p.x && player.x < p.x + p.width &&
+                    player.y + player.height > p.y && player.y + player.height < p.y + p.height + 10) {
+                    player.dy = -10;
+                }
+            });
+
+            if (player.x < 0) player.x = canvas.width - player.width;
+            if (player.x + player.width > canvas.width) player.x = 0;
+            if (player.y > canvas.height) {
+                resetGame();
+                alert("Игра окончена!");
+            }
         }
 
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            // Здесь будет отрисовка персонажа, платформ и препятствий
+            ctx.fillStyle = 'green';
+            platforms.forEach(p => ctx.fillRect(p.x, p.y, p.width, p.height));
+            ctx.fillStyle = 'blue';
+            ctx.fillRect(player.x, player.y, player.width, player.height);
         }
 
         function gameLoop() {
-            if (!gameStarted || gamePaused) return;
+            if (!gameStarted || gamePaused) return requestAnimationFrame(gameLoop);
+            update();
             draw();
             requestAnimationFrame(gameLoop);
         }
+
+        document.addEventListener('keydown', (e) => {
+            if (!gameStarted || gamePaused) return;
+            switch (e.key) {
+                case 'ArrowLeft': player.x -= player.speed; break;
+                case 'ArrowRight': player.x += player.speed; break;
+            }
+        });
     </script>
 </body>
 </html>
