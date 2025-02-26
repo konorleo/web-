@@ -169,13 +169,39 @@
             }
         }
 
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = 'green';
-            platforms.forEach(p => ctx.fillRect(p.x, p.y, p.width, p.height));
-            ctx.fillStyle = 'blue';
-            ctx.fillRect(player.x, player.y, player.width, player.height);
-        }
+     function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Небо с градиентом
+    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    gradient.addColorStop(0, '#87ceeb');
+    gradient.addColorStop(1, '#e0f7fa');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Платформы
+    platforms.forEach(p => {
+        ctx.fillStyle = '#8b4513';
+        ctx.fillRect(p.x, p.y, p.width, p.height);
+        ctx.fillStyle = '#2ecc71';
+        ctx.fillRect(p.x, p.y - 2 * SCALE, p.width, 2 * SCALE); // Трава сверху
+        ctx.strokeStyle = '#654321';
+        ctx.lineWidth = 1 * SCALE;
+        ctx.strokeRect(p.x, p.y, p.width, p.height);
+    });
+
+    // Персонаж (простой человечек)
+    const x = player.x;
+    const y = player.y;
+    ctx.fillStyle = '#3498db';
+    ctx.beginPath();
+    ctx.arc(x + player.width / 2, y + player.height / 4, player.width / 2, 0, Math.PI * 2); // Голова
+    ctx.fill();
+    ctx.fillRect(x + player.width / 4, y + player.height / 4, player.width / 2, player.height * 3 / 4); // Тело
+    ctx.fillStyle = '#e74c3c';
+    ctx.fillRect(x, y + player.height / 2, player.width / 4, player.height / 2); // Левая нога
+    ctx.fillRect(x + player.width * 3 / 4, y + player.height / 2, player.width / 4, player.height / 2); // Правая нога
+}
 
         function gameLoop() {
             if (!gameStarted || gamePaused) return requestAnimationFrame(gameLoop);
