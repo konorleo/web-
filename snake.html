@@ -159,13 +159,35 @@
         }
 
         function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = 'green';
-            snake.forEach(segment => ctx.fillRect(segment.x * GRID_SIZE, segment.y * GRID_SIZE, GRID_SIZE - 2, GRID_SIZE - 2));
-            ctx.fillStyle = 'red';
-            ctx.fillRect(food.x * GRID_SIZE, food.y * GRID_SIZE, GRID_SIZE - 2, GRID_SIZE - 2);
-        }
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    // Фон с травяным эффектом
+    ctx.fillStyle = '#d4e4bc';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Змейка
+    snake.forEach((segment, idx) => {
+        const x = segment.x * GRID_SIZE;
+        const y = segment.y * GRID_SIZE;
+        ctx.fillStyle = idx === 0 ? '#2ecc71' : '#27ae60'; // Голова ярче
+        ctx.beginPath();
+        ctx.arc(x + GRID_SIZE / 2, y + GRID_SIZE / 2, GRID_SIZE / 2 - 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#1a7431';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+    });
+
+    // Еда (яблоко)
+    const foodX = food.x * GRID_SIZE;
+    const foodY = food.y * GRID_SIZE;
+    ctx.fillStyle = '#e74c3c';
+    ctx.beginPath();
+    ctx.arc(foodX + GRID_SIZE / 2, foodY + GRID_SIZE / 2, GRID_SIZE / 2 - 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#27ae60';
+    ctx.fillRect(foodX + GRID_SIZE / 2 - 2, foodY + 2, 4, 6); // Листок
+}
         function gameLoop(timestamp) {
             if (!gameStarted || gamePaused) return requestAnimationFrame(gameLoop);
             if (!lastTime) lastTime = timestamp;
