@@ -6,13 +6,14 @@
     <title>Тетрис</title>
     <style>
         body {
+            margin: 0;
+            height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f0f0f0;
+            background: #2c3e50;
             overflow: hidden;
+            font-family: 'Courier New', monospace;
         }
         .container {
             display: flex;
@@ -20,35 +21,37 @@
             align-items: center;
         }
         canvas {
-            border: 1px solid #000;
-            background-color: #fff;
-            max-width: 100%;
-            height: auto;
+            background: #34495e;
+            border: 2px solid #7f8c8d;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
         }
-        .game-menu {
-            text-align: center;
+        .menu {
             margin-right: 20px;
+            text-align: center;
+            color: #ecf0f1;
         }
-        .game-menu h2 {
-            margin-bottom: 10px;
-            font-size: clamp(16px, 4vw, 20px);
+        .menu h2 {
+            font-size: clamp(18px, 4vw, 24px);
+            text-shadow: 2px 2px 4px #000;
         }
-        .game-menu button, .touch-controls button {
+        .menu button {
+            width: clamp(100px, 30vw, 150px);
             padding: 10px;
-            margin: 5px;
+            margin: 5px 0;
             font-size: clamp(12px, 3vw, 16px);
+            border: 2px solid #ecf0f1;
+            border-radius: 8px;
+            background: linear-gradient(#3498db, #2980b9);
+            color: #fff;
             cursor: pointer;
-            border: none;
-            border-radius: 5px;
-            background-color: #4CAF50;
-            color: white;
-            width: 100%;
-            max-width: 150px;
+            box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            transition: all 0.2s;
         }
-        .game-menu button:hover, .touch-controls button:hover {
-            background-color: #45a049;
+        .menu button:hover {
+            background: linear-gradient(#2980b9, #3498db);
+            box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
         }
-        .touch-controls {
+        .controls {
             display: none;
             margin-top: 10px;
         }
@@ -56,15 +59,14 @@
             .container {
                 flex-direction: column;
             }
-            .game-menu {
-                margin-right: 0;
-                margin-bottom: 10px;
+            .menu {
+                margin: 0 0 10px 0;
             }
             canvas {
                 width: 80vw;
                 height: 160vw;
             }
-            .touch-controls {
+            .controls {
                 display: grid;
                 grid-template-columns: repeat(3, 1fr);
                 gap: 5px;
@@ -75,35 +77,36 @@
 </head>
 <body>
     <div class="container">
-        <div class="game-menu">
+        <div class="menu">
             <h2>Тетрис</h2>
-            <button onclick="startGame()">Начать игру</button>
+            <button onclick="startGame()">Начать</button>
             <button onclick="pauseGame()">Пауза</button>
-            <button onclick="resetGame()">Перезапустить</button>
-            <button onclick="window.location.href='index.html'">Выбрать другую игру</button>
+            <button onclick="resetGame()">Сброс</button>
+            <button onclick="window.location.href='index.html'">Меню</button>
             <p>Счёт: <span id="score">0</span></p>
-            <div class="touch-controls">
+            <div class="controls">
                 <button onclick="moveLeft()">←</button>
-                <button onclick="rotatePiece()">↻</button>
+                <button onclick="rotate()">↻</button>
                 <button onclick="moveRight()">→</button>
                 <button onclick="moveDown()">↓</button>
             </div>
         </div>
-        <canvas id="tetrisCanvas"></canvas>
+        <canvas id="gameCanvas"></canvas>
     </div>
-
     <script>
-        const canvas = document.getElementById('tetrisCanvas');
+        const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const scoreElement = document.getElementById('score');
 
-        const BLOCK_SIZE = window.innerWidth <= 600 ? Math.floor(window.innerWidth * 0.08) : 20;
+        // Адаптивные размеры
+        const BLOCK_SIZE = window.innerWidth <= 600 ? Math.floor(window.innerWidth * 0.08) : 25;
         const COLS = 10;
         const ROWS = 20;
         canvas.width = COLS * BLOCK_SIZE;
         canvas.height = ROWS * BLOCK_SIZE;
 
-        const colors = ['cyan', 'blue', 'orange', 'yellow', 'green', 'purple', 'red'];
+        // Цвета и формы
+        const COLORS = ['#00ffff', '#0000ff', '#ff9800', '#ffff00', '#00ff00', '#8e24aa', '#ff0000'];
         const SHAPES = [
             [[1, 1, 1, 1]], // I
             [[1, 1], [1, 1]], // O
@@ -114,254 +117,199 @@
             [[0, 1, 1], [1, 1, 0]] // Z
         ];
 
-        let score = 0;
         let board = Array(ROWS).fill().map(() => Array(COLS).fill(0));
-        let gameStarted = false;
-        let gamePaused = false;
-        let currentPiece = null;
-        let currentX, currentY;
-        let lastTime = 0;
+        let piece = null, pieceX = 0, pieceY = 0;
+        let score = 0, started = false, paused = false, dropTime = 0;
+        const DROP_INTERVAL = 500;
+        let lastKeyTime = 0;
+        const KEY_DELAY = 100; // Задержка между нажатиями
 
         function startGame() {
-            if (!gameStarted) {
-                gameStarted = true;
+            if (!started) {
+                started = true;
                 spawnPiece();
                 requestAnimationFrame(gameLoop);
             }
         }
 
         function pauseGame() {
-            if (gameStarted) gamePaused = !gamePaused;
+            if (started) paused = !paused;
         }
 
         function resetGame() {
-            gameStarted = false;
-            gamePaused = false;
+            started = false;
+            paused = false;
             score = 0;
             scoreElement.textContent = score;
             board = Array(ROWS).fill().map(() => Array(COLS).fill(0));
-            currentPiece = null;
+            piece = null;
+            dropTime = 0;
         }
 
         function spawnPiece() {
-            const shapeIdx = Math.floor(Math.random() * SHAPES.length);
-            currentPiece = SHAPES[shapeIdx];
-            currentX = Math.floor(COLS / 2) - Math.floor(currentPiece[0].length / 2);
-            currentY = 0;
-            if (collides()) {
-                resetGame();
+            const idx = Math.floor(Math.random() * SHAPES.length);
+            piece = SHAPES[idx].map(row => [...row]); // Копируем массив
+            pieceX = Math.floor(COLS / 2) - Math.floor(piece[0].length / 2);
+            pieceY = -piece.length; // Начинаем выше поля
+            if (checkCollision()) {
                 alert("Игра окончена!");
+                resetGame();
             }
         }
 
-        function collides() {
-            for (let y = 0; y < currentPiece.length; y++) {
-                for (let x = 0; x < currentPiece[y].length; x++) {
-                    if (currentPiece[y][x] && (
-                        currentY + y >= ROWS ||
-                        currentX + x < 0 ||
-                        currentX + x >= COLS ||
-                        (currentY + y >= 0 && board[currentY + y][currentX + x])
-                    )) return true;
+        function checkCollision() {
+            for (let y = 0; y < piece.length; y++) {
+                for (let x = 0; x < piece[y].length; x++) {
+                    if (piece[y][x]) {
+                        const newY = pieceY + y;
+                        const newX = pieceX + x;
+                        if (newY >= ROWS || newX < 0 || newX >= COLS || (newY >= 0 && board[newY][newX])) {
+                            return true;
+                        }
+                    }
                 }
             }
             return false;
         }
 
-        function merge() {
-            for (let y = 0; y < currentPiece.length; y++) {
-                for (let x = 0; x < currentPiece[y].length; x++) {
-                    if (currentPiece[y][x]) {
-                        board[currentY + y][currentX + x] = SHAPES.indexOf(currentPiece) + 1;
+        function mergePiece() {
+            for (let y = 0; y < piece.length; y++) {
+                for (let x = 0; x < piece[y].length; x++) {
+                    if (piece[y][x] && pieceY + y >= 0) {
+                        board[pieceY + y][pieceX + x] = SHAPES.findIndex(shape => shape.every((row, i) => row.every((val, j) => val === piece[i][j]))) + 1;
                     }
                 }
             }
+            clearLines();
+            spawnPiece();
         }
 
         function clearLines() {
+            let linesCleared = 0;
             for (let y = ROWS - 1; y >= 0; y--) {
                 if (board[y].every(cell => cell)) {
                     board.splice(y, 1);
                     board.unshift(Array(COLS).fill(0));
-                    score += 10;
-                    scoreElement.textContent = score;
+                    linesCleared++;
                 }
             }
+            score += linesCleared * 10;
+            scoreElement.textContent = score;
         }
 
-function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Фон
-    ctx.fillStyle = '#333';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.strokeStyle = '#555';
-    ctx.lineWidth = 0.5;
-    for (let y = 0; y < ROWS; y++) {
-        for (let x = 0; x < COLS; x++) {
-            ctx.strokeRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
-        }
-    }
-
-    // Зафиксированные блоки
-    for (let y = 0; y < ROWS; y++) {
-        for (let x = 0; x < COLS; x++) {
-            if (board[y][x]) {
-                drawBlock(x, y, colors[board[y][x] - 1]);
+        function drop() {
+            pieceY++;
+            if (checkCollision()) {
+                pieceY--;
+                mergePiece();
             }
         }
-    }
 
-    // Текущая фигурка
-    if (currentPiece) {
-        for (let y = 0; y < currentPiece.length; y++) {
-            for (let x = 0; x < currentPiece[y].length; x++) {
-                if (currentPiece[y][x]) {
-                    drawBlock(currentX + x, currentY + y, colors[SHAPES.indexOf(currentPiece)]);
+        function drawBlock(x, y, color) {
+            const offsetX = x * BLOCK_SIZE + 1;
+            const offsetY = y * BLOCK_SIZE + 1;
+            const size = BLOCK_SIZE - 2;
+
+            // Градиентный блок
+            const gradient = ctx.createLinearGradient(offsetX, offsetY, offsetX + size, offsetY + size);
+            gradient.addColorStop(0, color);
+            gradient.addColorStop(1, darkenColor(color));
+            ctx.fillStyle = gradient;
+            ctx.fillRect(offsetX, offsetY, size, size);
+
+            // Обводка и блик
+            ctx.strokeStyle = '#ecf0f1';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(offsetX, offsetY, size, size);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.fillRect(offsetX + 2, offsetY + 2, size / 2, size / 2);
+        }
+
+        function darkenColor(color) {
+            const tempCanvas = document.createElement('canvas').getContext('2d');
+            tempCanvas.fillStyle = color;
+            tempCanvas.fillRect(0, 0, 1, 1);
+            const [r, g, b] = tempCanvas.getImageData(0, 0, 1, 1).data;
+            return `rgb(${Math.max(0, r - 50)}, ${Math.max(0, g - 50)}, ${Math.max(0, b - 50)})`;
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#34495e';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Сетка
+            ctx.strokeStyle = '#7f8c8d';
+            ctx.lineWidth = 0.5;
+            for (let y = 0; y < ROWS; y++) {
+                for (let x = 0; x < COLS; x++) {
+                    ctx.strokeRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
                 }
             }
-        }
-    }
-}
 
-function drawBlock(x, y, color) {
-    const size = BLOCK_SIZE - 2;
-    const offsetX = x * BLOCK_SIZE + 1;
-    const offsetY = y * BLOCK_SIZE + 1;
+            // Зафиксированные блоки
+            for (let y = 0; y < ROWS; y++) {
+                for (let x = 0; x < COLS; x++) {
+                    if (board[y][x]) drawBlock(x, y, COLORS[board[y][x] - 1]);
+                }
+            }
 
-    // Градиент
-    const gradient = ctx.createLinearGradient(offsetX, offsetY, offsetX + size, offsetY + size);
-    gradient.addColorStop(0, color);
-    gradient.addColorStop(1, darkenColor(color));
-    ctx.fillStyle = gradient;
-    ctx.fillRect(offsetX, offsetY, size, size);
-
-    // Пиксельная текстура
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-    for (let i = 0; i < size; i += 4) {
-        for (let j = 0; j < size; j += 4) {
-            ctx.fillRect(offsetX + i, offsetY + j, 2, 2);
-        }
-    }
-
-    // Тень
-    ctx.shadowColor = '#000';
-    ctx.shadowBlur = 4;
-    ctx.shadowOffsetX = 2;
-    ctx.shadowOffsetY = 2;
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(offsetX, offsetY, size, size);
-    ctx.shadowBlur = 0;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 0;
-}
-
-function darkenColor(color) {
-    const c = document.createElement('canvas').getContext('2d');
-    c.fillStyle = color;
-    c.fillRect(0, 0, 1, 1);
-    const [r, g, b] = c.getImageData(0, 0, 1, 1).data;
-    return `rgb(${Math.max(0, r - 50)}, ${Math.max(0, g - 50)}, ${Math.max(0, b - 50)})`;
-}
-
-function drawBlock(x, y, color) {
-    const size = BLOCK_SIZE - 2;
-    const offsetX = x * BLOCK_SIZE + 1;
-    const offsetY = y * BLOCK_SIZE + 1;
-
-    // Основной цвет с градиентом
-    const gradient = ctx.createLinearGradient(offsetX, offsetY, offsetX + size, offsetY + size);
-    gradient.addColorStop(0, color);
-    gradient.addColorStop(1, darkenColor(color));
-    ctx.fillStyle = gradient;
-    ctx.fillRect(offsetX, offsetY, size, size);
-
-    // Обводка
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(offsetX, offsetY, size, size);
-
-    // Блик
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-    ctx.fillRect(offsetX + 2, offsetY + 2, size / 2, size / 2);
-}
-
-function darkenColor(color) {
-    const c = document.createElement('canvas').getContext('2d');
-    c.fillStyle = color;
-    c.fillRect(0, 0, 1, 1);
-    const [r, g, b] = c.getImageData(0, 0, 1, 1).data;
-    return `rgb(${Math.max(0, r - 50)}, ${Math.max(0, g - 50)}, ${Math.max(0, b - 50)})`;
-}
-            if (currentPiece) {
-                ctx.fillStyle = colors[SHAPES.indexOf(currentPiece)];
-                for (let y = 0; y < currentPiece.length; y++) {
-                    for (let x = 0; x < currentPiece[y].length; x++) {
-                        if (currentPiece[y][x]) {
-                            ctx.fillRect((currentX + x) * BLOCK_SIZE, (currentY + y) * BLOCK_SIZE, BLOCK_SIZE - 1, BLOCK_SIZE - 1);
-                        }
+            // Текущая фигура
+            if (piece) {
+                for (let y = 0; y < piece.length; y++) {
+                    for (let x = 0; x < piece[y].length; x++) {
+                        if (piece[y][x] && pieceY + y >= 0) drawBlock(pieceX + x, pieceY + y, COLORS[SHAPES.findIndex(shape => shape.every((row, i) => row.every((val, j) => val === piece[i][j])))]);
                     }
                 }
             }
         }
 
-        function drop() {
-            currentY++;
-            if (collides()) {
-                currentY--;
-                merge();
-                clearLines();
-                spawnPiece();
-            }
-        }
-
-        function gameLoop(timestamp) {
-            if (!gameStarted || gamePaused) return requestAnimationFrame(gameLoop);
-            if (!lastTime) lastTime = timestamp;
-            if (timestamp - lastTime > 500) {
+        function gameLoop(time) {
+            if (!started || paused) return requestAnimationFrame(gameLoop);
+            if (time - dropTime >= DROP_INTERVAL) {
                 drop();
-                lastTime = timestamp;
+                dropTime = time;
             }
             draw();
             requestAnimationFrame(gameLoop);
         }
 
-        // Управление для ПК
-        document.addEventListener('keydown', (e) => {
-            if (!gameStarted || gamePaused || !currentPiece) return;
+        const keyState = {};
+        document.addEventListener('keydown', e => {
+            if (!started || paused || keyState[e.key] || (performance.now() - lastKeyTime < KEY_DELAY)) return;
+            keyState[e.key] = true;
+            lastKeyTime = performance.now();
             switch (e.key) {
                 case 'ArrowLeft': moveLeft(); break;
                 case 'ArrowRight': moveRight(); break;
                 case 'ArrowDown': moveDown(); break;
-                case 'ArrowUp': rotatePiece(); break;
+                case 'ArrowUp': rotate(); break;
             }
         });
+        document.addEventListener('keyup', e => delete keyState[e.key]);
 
-        // Управление для телефона
         function moveLeft() {
-            if (!gameStarted || gamePaused || !currentPiece) return;
-            currentX--;
-            if (collides()) currentX++;
+            pieceX--;
+            if (checkCollision()) pieceX++;
         }
 
         function moveRight() {
-            if (!gameStarted || gamePaused || !currentPiece) return;
-            currentX++;
-            if (collides()) currentX--;
+            pieceX++;
+            if (checkCollision()) pieceX--;
         }
 
         function moveDown() {
-            if (!gameStarted || gamePaused || !currentPiece) return;
             drop();
+            dropTime = performance.now();
         }
 
-        function rotatePiece() {
-            if (!gameStarted || gamePaused || !currentPiece) return;
-            const rotated = currentPiece[0].map((_, idx) => currentPiece.map(row => row[idx]).reverse());
-            const prevPiece = currentPiece;
-            currentPiece = rotated;
-            if (collides()) currentPiece = prevPiece;
+        function rotate() {
+            const rotated = piece[0].map((_, i) => piece.map(row => row[i]).reverse());
+            const oldPiece = piece.map(row => [...row]);
+            piece = rotated;
+            if (checkCollision()) {
+                piece = oldPiece;
+            }
         }
     </script>
 </body>
