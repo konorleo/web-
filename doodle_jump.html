@@ -169,38 +169,60 @@
             }
         }
 
-     function draw() {
+   function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Небо с градиентом
+    // Небо
     const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
     gradient.addColorStop(0, '#87ceeb');
     gradient.addColorStop(1, '#e0f7fa');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    // Облака
+    function drawCloud(x, y, size) {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.beginPath();
+        ctx.arc(x, y, size, 0, Math.PI * 2);
+        ctx.arc(x + size * 0.8, y - size * 0.5, size * 0.6, 0, Math.PI * 2);
+        ctx.arc(x + size * 1.5, y, size * 0.7, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    drawCloud(50 * SCALE, 100 * SCALE, 30 * SCALE);
+    drawCloud(canvas.width - 80 * SCALE, 150 * SCALE, 25 * SCALE);
+
     // Платформы
     platforms.forEach(p => {
         ctx.fillStyle = '#8b4513';
         ctx.fillRect(p.x, p.y, p.width, p.height);
+        ctx.fillStyle = '#654321';
+        for (let i = 0; i < p.width; i += 5 * SCALE) {
+            ctx.fillRect(p.x + i, p.y, 2 * SCALE, p.height);
+        }
         ctx.fillStyle = '#2ecc71';
-        ctx.fillRect(p.x, p.y - 2 * SCALE, p.width, 2 * SCALE); // Трава сверху
-        ctx.strokeStyle = '#654321';
+        ctx.fillRect(p.x, p.y - 2 * SCALE, p.width, 2 * SCALE);
+        ctx.strokeStyle = '#1a7431';
         ctx.lineWidth = 1 * SCALE;
-        ctx.strokeRect(p.x, p.y, p.width, p.height);
+        ctx.strokeRect(p.x, p.y - 2 * SCALE, p.width, 2 * SCALE);
     });
 
-    // Персонаж (простой человечек)
+    // Персонаж
     const x = player.x;
     const y = player.y;
     ctx.fillStyle = '#3498db';
     ctx.beginPath();
     ctx.arc(x + player.width / 2, y + player.height / 4, player.width / 2, 0, Math.PI * 2); // Голова
     ctx.fill();
-    ctx.fillRect(x + player.width / 4, y + player.height / 4, player.width / 2, player.height * 3 / 4); // Тело
+    ctx.fillRect(x + player.width / 4, y + player.height / 4, player.width / 2, player.height / 2); // Тело
     ctx.fillStyle = '#e74c3c';
     ctx.fillRect(x, y + player.height / 2, player.width / 4, player.height / 2); // Левая нога
     ctx.fillRect(x + player.width * 3 / 4, y + player.height / 2, player.width / 4, player.height / 2); // Правая нога
+    ctx.fillStyle = '#f1c40f';
+    ctx.fillRect(x - player.width / 4, y + player.height / 2, player.width / 4, player.height / 4); // Левая рука
+    ctx.fillRect(x + player.width, y + player.height / 2, player.width / 4, player.height / 4); // Правая рука
+    ctx.fillStyle = '#000';
+    ctx.fillRect(x + player.width / 3, y + player.height / 6, 2 * SCALE, 2 * SCALE); // Глаза
+    ctx.fillRect(x + player.width * 2 / 3, y + player.height / 6, 2 * SCALE, 2 * SCALE);
 }
 
         function gameLoop() {
