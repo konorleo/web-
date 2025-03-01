@@ -12,80 +12,46 @@
             align-items: center;
             height: 100vh;
             margin: 0;
-            overflow: hidden;
-        }
-        canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
+            background-color: #f0f0f0;
         }
         .menu {
             text-align: center;
-            z-index: 1;
         }
         .menu h1 {
             margin-bottom: 20px;
-            font-size: clamp(24px, 6vw, 36px);
-            color: #fff;
-            text-shadow: 2px 2px 4px #333;
-            font-family: 'Courier New', monospace;
+            font-size: 24px;
         }
         .menu button {
             display: block;
-            width: clamp(150px, 50vw, 200px);
-            padding: 15px;
+            width: 200px;
+            padding: 10px;
             margin: 10px auto;
-            font-size: clamp(16px, 4vw, 18px);
+            font-size: 18px;
             cursor: pointer;
-            border: 2px solid #333;
-            border-radius: 8px;
-            background: linear-gradient(#4CAF50, #45a049);
+            border: none;
+            border-radius: 5px;
+            background-color: #4CAF50;
             color: white;
-            box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
-            transition: all 0.2s;
         }
         .menu button:hover {
-            background: linear-gradient(#45a049, #4CAF50);
-            box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+            background-color: #45a049;
+        }
+        @media (max-width: 600px) {
+            .menu button {
+                width: 80%;
+            }
+            .menu h1 {
+                font-size: 20px;
+            }
         }
     </style>
 </head>
 <body>
-    <canvas id="backgroundCanvas"></canvas>
     <div class="menu">
-        <h1>Мини-игры</h1>
+        <h1>Выберите игру</h1>
         <button onclick="window.location.href='tetris.html'">Тетрис</button>
         <button onclick="window.location.href='doodle_jump.html'">Doodle Jump</button>
         <button onclick="window.location.href='snake.html'">Змейка</button>
     </div>
-    <script>
-        const canvas = document.getElementById('backgroundCanvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-
-        // Фон
-        const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-        gradient.addColorStop(0, '#87ceeb');
-        gradient.addColorStop(1, '#f0f8ff');
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        // Облака
-        function drawCloud(x, y, size) {
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-            ctx.beginPath();
-            ctx.arc(x, y, size, 0, Math.PI * 2);
-            ctx.arc(x + size * 0.8, y - size * 0.5, size * 0.6, 0, Math.PI * 2);
-            ctx.arc(x + size * 1.5, y, size * 0.7, 0, Math.PI * 2);
-            ctx.fill();
-        }
-        drawCloud(100, 100, 50);
-        drawCloud(canvas.width - 150, 150, 40);
-        drawCloud(canvas.width / 2, 80, 60);
-    </script>
 </body>
 </html>
