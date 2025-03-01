@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Тетрис</title>
+    <title>Вулканический Тетрис</title>
     <style>
         body {
             margin: 0;
@@ -11,45 +11,52 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background: #2c3e50;
+            background: #1a1a1a;
             overflow: hidden;
             font-family: 'Courier New', monospace;
         }
         .container {
+            position: relative;
             display: flex;
             flex-direction: row;
             align-items: center;
         }
-        canvas {
-            background: #34495e;
-            border: 2px solid #7f8c8d;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        #gameCanvas {
+            background: transparent;
+            border: 2px solid #ff4500;
+            box-shadow: 0 0 20px rgba(255, 69, 0, 0.5);
+        }
+        #bgCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: -1;
         }
         .menu {
             margin-right: 20px;
             text-align: center;
-            color: #ecf0f1;
+            color: #ffeb3b;
+            text-shadow: 0 0 5px #ff4500;
         }
         .menu h2 {
             font-size: clamp(18px, 4vw, 24px);
-            text-shadow: 2px 2px 4px #000;
         }
         .menu button {
             width: clamp(100px, 30vw, 150px);
             padding: 10px;
             margin: 5px 0;
             font-size: clamp(12px, 3vw, 16px);
-            border: 2px solid #ecf0f1;
+            border: 2px solid #ff4500;
             border-radius: 8px;
-            background: linear-gradient(#3498db, #2980b9);
+            background: linear-gradient(#ff5722, #d32f2f);
             color: #fff;
             cursor: pointer;
-            box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 0 10px rgba(255, 69, 0, 0.5);
             transition: all 0.2s;
         }
         .menu button:hover {
-            background: linear-gradient(#2980b9, #3498db);
-            box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+            background: linear-gradient(#d32f2f, #ff5722);
+            box-shadow: 0 0 15px rgba(255, 69, 0, 0.8);
         }
         .controls {
             display: none;
@@ -62,7 +69,7 @@
             .menu {
                 margin: 0 0 10px 0;
             }
-            canvas {
+            #gameCanvas, #bgCanvas {
                 width: 80vw;
                 height: 160vw;
             }
@@ -78,7 +85,7 @@
 <body>
     <div class="container">
         <div class="menu">
-            <h2>Тетрис</h2>
+            <h2>Вулканический Тетрис</h2>
             <button onclick="startGame()">Начать</button>
             <button onclick="pauseGame()">Пауза</button>
             <button onclick="resetGame()">Сброс</button>
@@ -91,70 +98,69 @@
                 <button onclick="moveDown()">↓</button>
             </div>
         </div>
+        <canvas id="bgCanvas"></canvas>
         <canvas id="gameCanvas"></canvas>
     </div>
     <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
+        const gameCanvas = document.getElementById('gameCanvas');
+        const gameCtx = gameCanvas.getContext('2d');
+        const bgCanvas = document.getElementById('bgCanvas');
+        const bgCtx = bgCanvas.getContext('2d');
         const scoreElement = document.getElementById('score');
 
         // Адаптивные размеры
         const BLOCK_SIZE = window.innerWidth <= 600 ? Math.floor(window.innerWidth * 0.08) : 25;
         const COLS = 10;
         const ROWS = 20;
-        canvas.width = COLS * BLOCK_SIZE;
-        canvas.height = ROWS * BLOCK_SIZE;
+        gameCanvas.width = bgCanvas.width = COLS * BLOCK_SIZE;
+        gameCanvas.height = bgCanvas.height = ROWS * BLOCK_SIZE;
 
-        // Цвета и формы
-        const COLORS = ['#00ffff', '#0000ff', '#ff9800', '#ffff00', '#00ff00', '#8e24aa', '#ff0000'];
-        const SHAPES = [
-            [[1, 1, 1, 1]], // I
-            [[1, 1], [1, 1]], // O
-            [[1, 1, 1], [0, 1, 0]], // T
-            [[1, 1, 1], [1, 0, 0]], // L
-            [[1, 1, 1], [0, 0, 1]], // J
-            [[1, 1, 0], [0, 1, 1]], // S
-            [[0, 1, 1], [1, 1, 0]] // Z
-        ];
-
+        // Игровые данные
+        const SHAPES = [[[1,1,1,1]], [[1,1],[1,1]], [[1,1,1],[0,1,0]], [[1,1,1],[1,0,0]], [[1,1,1],[0,0,1]], [[1,1,0],[0,1,1]], [[0,1,1],[1,1,0]]];
+        const COLORS = ['#ff4500', '#ff9800', '#e91e63', '#ffff00', '#ffeb3b', '#d81b60', '#f44336'];
         let board = Array(ROWS).fill().map(() => Array(COLS).fill(0));
         let piece = null, pieceX = 0, pieceY = 0;
         let score = 0, started = false, paused = false, dropTime = 0;
         const DROP_INTERVAL = 500;
-        let lastKeyTime = 0;
-        const KEY_DELAY = 100; // Задержка между нажатиями
+        let lavaFlow = [], smokeParticles = [];
 
         function startGame() {
             if (!started) {
                 started = true;
+                resetGame();
                 spawnPiece();
                 requestAnimationFrame(gameLoop);
+                // Здесь можно запустить саундтрек: playBackgroundMusic('volcano_ambient.mp3');
             }
         }
 
         function pauseGame() {
             if (started) paused = !paused;
+            // paused ? pauseMusic() : resumeMusic();
         }
 
         function resetGame() {
-            started = false;
-            paused = false;
             score = 0;
             scoreElement.textContent = score;
             board = Array(ROWS).fill().map(() => Array(COLS).fill(0));
             piece = null;
             dropTime = 0;
+            lavaFlow = [];
+            smokeParticles = [];
+            drawBackground();
         }
 
         function spawnPiece() {
             const idx = Math.floor(Math.random() * SHAPES.length);
-            piece = SHAPES[idx].map(row => [...row]); // Копируем массив
+            piece = SHAPES[idx].map(row => [...row]);
             pieceX = Math.floor(COLS / 2) - Math.floor(piece[0].length / 2);
-            pieceY = -piece.length; // Начинаем выше поля
+            pieceY = -piece.length;
             if (checkCollision()) {
-                alert("Игра окончена!");
+                alert("Вулкан извергся! Игра окончена!");
+                // playSound('eruption_explosion.mp3');
                 resetGame();
             }
+            // playSound('piece_spawn.mp3');
         }
 
         function checkCollision() {
@@ -163,9 +169,7 @@
                     if (piece[y][x]) {
                         const newY = pieceY + y;
                         const newX = pieceX + x;
-                        if (newY >= ROWS || newX < 0 || newX >= COLS || (newY >= 0 && board[newY][newX])) {
-                            return true;
-                        }
+                        if (newY >= ROWS || newX < 0 || newX >= COLS || (newY >= 0 && board[newY][newX])) return true;
                     }
                 }
             }
@@ -176,12 +180,14 @@
             for (let y = 0; y < piece.length; y++) {
                 for (let x = 0; x < piece[y].length; x++) {
                     if (piece[y][x] && pieceY + y >= 0) {
-                        board[pieceY + y][pieceX + x] = SHAPES.findIndex(shape => shape.every((row, i) => row.every((val, j) => val === piece[i][j]))) + 1;
+                        board[pieceY + y][pieceX + x] = SHAPES.findIndex(s => s.every((r, i) => r.every((v, j) => v === piece[i][j]))) + 1;
+                        lavaFlow.push({ x: (pieceX + x) * BLOCK_SIZE, y: (pieceY + y) * BLOCK_SIZE, dy: 0 });
                     }
                 }
             }
             clearLines();
             spawnPiece();
+            // playSound('piece_land.mp3');
         }
 
         function clearLines() {
@@ -191,10 +197,19 @@
                     board.splice(y, 1);
                     board.unshift(Array(COLS).fill(0));
                     linesCleared++;
+                    smokeParticles.push(...Array(10).fill().map(() => ({
+                        x: Math.random() * canvas.width,
+                        y: y * BLOCK_SIZE,
+                        size: Math.random() * 5 + 2,
+                        dy: -(Math.random() * 2 + 1)
+                    })));
                 }
             }
-            score += linesCleared * 10;
-            scoreElement.textContent = score;
+            if (linesCleared) {
+                score += linesCleared * 10;
+                scoreElement.textContent = score;
+                // increaseMusicIntensity(linesCleared);
+            }
         }
 
         function drop() {
@@ -205,24 +220,59 @@
             }
         }
 
+        function drawBackground() {
+            bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+
+            // Небо с дымом
+            const skyGradient = bgCtx.createLinearGradient(0, 0, 0, bgCanvas.height);
+            skyGradient.addColorStop(0, '#4a2c2a');
+            skyGradient.addColorStop(1, '#1a1a1a');
+            bgCtx.fillStyle = skyGradient;
+            bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
+
+            // Горы в форме полумесяца
+            bgCtx.fillStyle = '#3e2723';
+            bgCtx.beginPath();
+            bgCtx.moveTo(0, bgCanvas.height);
+            bgCtx.quadraticCurveTo(bgCanvas.width / 2, bgCanvas.height * 0.6, bgCanvas.width, bgCanvas.height);
+            bgCtx.lineTo(bgCanvas.width, bgCanvas.height);
+            bgCtx.fill();
+
+            // Вулкан
+            bgCtx.fillStyle = '#2e1e1b';
+            bgCtx.beginPath();
+            bgCtx.moveTo(bgCanvas.width / 2 - 50, bgCanvas.height);
+            bgCtx.lineTo(bgCanvas.width / 2, bgCanvas.height * 0.7);
+            bgCtx.lineTo(bgCanvas.width / 2 + 50, bgCanvas.height);
+            bgCtx.fill();
+            const lavaGlow = bgCtx.createRadialGradient(bgCanvas.width / 2, bgCanvas.height * 0.7, 0, bgCanvas.width / 2, bgCanvas.height * 0.7, 50);
+            lavaGlow.addColorStop(0, '#ff4500');
+            lavaGlow.addColorStop(1, 'transparent');
+            bgCtx.fillStyle = lavaGlow;
+            bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
+        }
+
         function drawBlock(x, y, color) {
             const offsetX = x * BLOCK_SIZE + 1;
             const offsetY = y * BLOCK_SIZE + 1;
             const size = BLOCK_SIZE - 2;
 
-            // Градиентный блок
-            const gradient = ctx.createLinearGradient(offsetX, offsetY, offsetX + size, offsetY + size);
-            gradient.addColorStop(0, color);
+            // Лавовый эффект
+            const gradient = gameCtx.createRadialGradient(offsetX + size / 2, offsetY + size / 2, 0, offsetX + size / 2, offsetY + size / 2, size);
+            gradient.addColorStop(0, '#fff');
+            gradient.addColorStop(0.5, color);
             gradient.addColorStop(1, darkenColor(color));
-            ctx.fillStyle = gradient;
-            ctx.fillRect(offsetX, offsetY, size, size);
+            gameCtx.fillStyle = gradient;
+            gameCtx.fillRect(offsetX, offsetY, size, size);
 
-            // Обводка и блик
-            ctx.strokeStyle = '#ecf0f1';
-            ctx.lineWidth = 1;
-            ctx.strokeRect(offsetX, offsetY, size, size);
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-            ctx.fillRect(offsetX + 2, offsetY + 2, size / 2, size / 2);
+            // Неоновая обводка
+            gameCtx.strokeStyle = '#ffeb3b';
+            gameCtx.lineWidth = 1;
+            gameCtx.strokeRect(offsetX, offsetY, size, size);
+
+            // Эффект пепла
+            gameCtx.fillStyle = 'rgba(169, 169, 169, 0.5)';
+            gameCtx.fillRect(offsetX + Math.random() * size / 2, offsetY + Math.random() * size / 2, 2, 2);
         }
 
         function darkenColor(color) {
@@ -230,38 +280,46 @@
             tempCanvas.fillStyle = color;
             tempCanvas.fillRect(0, 0, 1, 1);
             const [r, g, b] = tempCanvas.getImageData(0, 0, 1, 1).data;
-            return `rgb(${Math.max(0, r - 50)}, ${Math.max(0, g - 50)}, ${Math.max(0, b - 50)})`;
+            return `rgb(${Math.max(0, r - 80)}, ${Math.max(0, g - 80)}, ${Math.max(0, b - 80)})`;
+        }
+
+        function animateEffects() {
+            // Потоки лавы
+            lavaFlow.forEach((flow, i) => {
+                flow.dy += 0.5;
+                flow.y += flow.dy;
+                gameCtx.fillStyle = `rgba(255, 69, 0, ${1 - flow.dy / 20})`;
+                gameCtx.fillRect(flow.x + Math.random() * 2 - 1, flow.y, BLOCK_SIZE - 2, BLOCK_SIZE / 2);
+                if (flow.y > gameCanvas.height) lavaFlow.splice(i, 1);
+            });
+
+            // Дым
+            smokeParticles.forEach((p, i) => {
+                p.y += p.dy;
+                p.dy -= 0.05;
+                gameCtx.fillStyle = `rgba(169, 169, 169, ${Math.max(0, 1 - p.y / gameCanvas.height)})`;
+                gameCtx.beginPath();
+                gameCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                gameCtx.fill();
+                if (p.y < 0 || p.dy > 0) smokeParticles.splice(i, 1);
+            });
         }
 
         function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#34495e';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Сетка
-            ctx.strokeStyle = '#7f8c8d';
-            ctx.lineWidth = 0.5;
-            for (let y = 0; y < ROWS; y++) {
-                for (let x = 0; x < COLS; x++) {
-                    ctx.strokeRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
-                }
-            }
-
-            // Зафиксированные блоки
+            gameCtx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
             for (let y = 0; y < ROWS; y++) {
                 for (let x = 0; x < COLS; x++) {
                     if (board[y][x]) drawBlock(x, y, COLORS[board[y][x] - 1]);
                 }
             }
-
-            // Текущая фигура
             if (piece) {
                 for (let y = 0; y < piece.length; y++) {
                     for (let x = 0; x < piece[y].length; x++) {
-                        if (piece[y][x] && pieceY + y >= 0) drawBlock(pieceX + x, pieceY + y, COLORS[SHAPES.findIndex(shape => shape.every((row, i) => row.every((val, j) => val === piece[i][j])))]);
+                        if (piece[y][x] && pieceY + y >= 0) drawBlock(pieceX + x, pieceY + y, COLORS[SHAPES.findIndex(s => s.every((r, i) => r.every((v, j) => v === piece[i][j])))]);
                     }
                 }
             }
+            animateEffects();
         }
 
         function gameLoop(time) {
@@ -276,9 +334,8 @@
 
         const keyState = {};
         document.addEventListener('keydown', e => {
-            if (!started || paused || keyState[e.key] || (performance.now() - lastKeyTime < KEY_DELAY)) return;
+            if (!started || paused || keyState[e.key]) return;
             keyState[e.key] = true;
-            lastKeyTime = performance.now();
             switch (e.key) {
                 case 'ArrowLeft': moveLeft(); break;
                 case 'ArrowRight': moveRight(); break;
@@ -288,29 +345,18 @@
         });
         document.addEventListener('keyup', e => delete keyState[e.key]);
 
-        function moveLeft() {
-            pieceX--;
-            if (checkCollision()) pieceX++;
-        }
-
-        function moveRight() {
-            pieceX++;
-            if (checkCollision()) pieceX--;
-        }
-
-        function moveDown() {
-            drop();
-            dropTime = performance.now();
-        }
-
+        function moveLeft() { pieceX--; if (checkCollision()) pieceX++; }
+        function moveRight() { pieceX++; if (checkCollision()) pieceX--; }
+        function moveDown() { drop(); dropTime = performance.now(); }
         function rotate() {
             const rotated = piece[0].map((_, i) => piece.map(row => row[i]).reverse());
             const oldPiece = piece.map(row => [...row]);
             piece = rotated;
-            if (checkCollision()) {
-                piece = oldPiece;
-            }
+            if (checkCollision()) piece = oldPiece;
+            // playSound('rotate_click.mp3');
         }
+
+        drawBackground();
     </script>
 </body>
 </html>
