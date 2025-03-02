@@ -19,7 +19,6 @@
             flex-direction: column;
             align-items: center;
             width: 100%;
-            height: 100%;
         }
         .menu {
             text-align: center;
@@ -28,10 +27,6 @@
         canvas {
             border: 1px solid #000;
             background-color: #fff;
-            width: 100%;
-            height: calc(100% - 140px);
-            max-width: 100vw;
-            max-height: calc(100vh - 140px);
         }
         .controls {
             display: none;
@@ -74,13 +69,7 @@
                 margin-right: 20px;
                 padding: 0;
             }
-            canvas {
-                width: auto;
-                height: auto;
-                max-width: 300px;
-                max-height: 500px;
-                margin-left: 20px;
-            }
+            canvas { margin-left: 20px; }
         }
     </style>
 </head>
@@ -94,7 +83,7 @@
             <button onclick="window.location.href='index.html'">Меню</button>
             <p>Счёт: <span id="score">0</span></p>
         </div>
-        <canvas id="doodleCanvas"></canvas>
+        <canvas id="doodleCanvas" width="300" height="500"></canvas>
         <div class="controls">
             <button>←</button>
             <button>→</button>
@@ -111,9 +100,6 @@
         const PLATFORM_WIDTH = 60;
         const PLATFORM_HEIGHT = 10;
         const GRAVITY = 0.5;
-        canvas.width = Math.min(window.innerWidth, window.innerHeight - 140) * 0.9;
-        canvas.height = Math.min(window.innerWidth, window.innerHeight - 140) * 1.5;
-
         let player = { x: canvas.width / 2 - PLAYER_WIDTH / 2, y: canvas.height - 50, dy: 0, dx: 0, speed: 5 };
         let platforms = [{ x: canvas.width / 2 - PLATFORM_WIDTH / 2, y: canvas.height - 20, w: PLATFORM_WIDTH, h: PLATFORM_HEIGHT }];
         let score = 0, started = false, paused = false;
@@ -182,7 +168,7 @@
             platforms.forEach(p => {
                 if (player.dy > 0 && player.x + PLAYER_WIDTH > p.x && player.x < p.x + p.w &&
                     player.y + PLAYER_HEIGHT > p.y && player.y + PLAYER_HEIGHT <= p.y + p.h + player.dy) {
-                    player.dy = -10; // Slower jump
+                    player.dy = -10;
                 }
             });
 
