@@ -74,7 +74,7 @@
         const PLATFORM_WIDTH = 60;
         const PLATFORM_HEIGHT = 10;
         const GRAVITY = 0.5;
-        let player = { x: canvas.width / 2 - PLAYER_WIDTH / 2, y: canvas.height - 50, dy: 0, dx: 0, speed: 5 };
+        let player = { x: canvas.width / 2 - PLAYER_WIDTH / 2, y: canvas.height - 50, dy: 0, dx: 0, speed: 0.3 };
         let platforms = [{ x: canvas.width / 2 - PLATFORM_WIDTH / 2, y: canvas.height - 20, w: PLATFORM_WIDTH, h: PLATFORM_HEIGHT }];
         let score = 0, started = false, paused = false;
 
@@ -82,6 +82,19 @@
             if (!started) {
                 started = true;
                 resetGame();
+                // Запрос разрешения на использование ориентации устройства (для iOS)
+                if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                    DeviceOrientationEvent.requestPermission()
+                        .then(response => {
+                            if (response === 'granted') {
+                                window.addEventListener('deviceorientation', handleOrientation);
+                            }
+                        })
+                        .catch(console.error);
+                } else {
+                    // Для Android и других устройств сразу добавляем слушатель
+                    window.addEventListener('deviceorientation', handleOrientation);
+                }
                 requestAnimationFrame(gameLoop);
             }
         }
@@ -93,7 +106,7 @@
         function resetGame() {
             score = 0;
             scoreElement.textContent = score;
-            player = { x: canvas.width / 2 - PLAYER_WIDTH / 2, y: canvas.height - 50, dy: 0, dx: 0, speed: 5 };
+            player = { x: canvas.width / 2 - PLAYER_WIDTH / 2, y: canvas.height - 50, dy: 0, dx: 0, speed: 0.3 };
             platforms = [{ x: canvas.width / 2 - PLATFORM_WIDTH / 2, y: canvas.height - 20, w: PLATFORM_WIDTH, h: PLATFORM_HEIGHT }];
             spawnPlatforms();
         }
@@ -139,7 +152,7 @@
                 alert("Игра окончена!");
                 resetGame();
             }
-            player.dx *= 0.9;
+            player.dx *= 0.9; // Плавное затухание движения
         }
 
         function draw() {
@@ -157,11 +170,19 @@
             requestAnimationFrame(gameLoop);
         }
 
+        // Управление наклоном телефона
+        function handleOrientation(event) {
+            if (!started || paused) return;
+            const gamma = event.gamma; // Наклон влево/вправо (-90 до 90 градусов)
+            player.dx = gamma * player.speed; // Чувствительность движения
+        }
+
+        // Резервное управление клавишами для ПК
         document.addEventListener('keydown', e => {
             if (!started || paused) return;
             switch (e.key) {
-                case 'ArrowLeft': player.dx = -player.speed; break;
-                case 'ArrowRight': player.dx = player.speed; break;
+                case 'ArrowLeft': player.dx = -player.speed * 10; break;
+                case 'ArrowRight': player.dx = player.speed * 10; break;
             }
         });
     </script>
