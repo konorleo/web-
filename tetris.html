@@ -19,7 +19,6 @@
             flex-direction: column;
             align-items: center;
             width: 100%;
-            height: 100%;
         }
         .menu {
             text-align: center;
@@ -28,10 +27,6 @@
         canvas {
             border: 1px solid #000;
             background-color: #fff;
-            width: 100%;
-            height: calc(100% - 140px); /* Оставляем место для меню и кнопок */
-            max-width: 100vw;
-            max-height: calc(100vh - 140px);
         }
         .controls {
             display: none;
@@ -74,13 +69,7 @@
                 margin-right: 20px;
                 padding: 0;
             }
-            canvas {
-                width: auto;
-                height: auto;
-                max-width: 200px;
-                max-height: 400px;
-                margin-left: 20px;
-            }
+            canvas { margin-left: 20px; }
         }
     </style>
 </head>
@@ -94,7 +83,7 @@
             <button onclick="window.location.href='index.html'">Меню</button>
             <p>Счёт: <span id="score">0</span></p>
         </div>
-        <canvas id="tetrisCanvas"></canvas>
+        <canvas id="tetrisCanvas" width="200" height="400"></canvas>
         <div class="controls">
             <button onclick="moveLeft()">←</button>
             <button onclick="rotate()">↻</button>
@@ -108,12 +97,9 @@
         const ctx = canvas.getContext('2d');
         const scoreElement = document.getElementById('score');
 
-        const BLOCK_SIZE = Math.floor(Math.min(window.innerWidth, window.innerHeight - 140) / 20);
-        const COLS = 10;
-        const ROWS = 20;
-        canvas.width = COLS * BLOCK_SIZE;
-        canvas.height = ROWS * BLOCK_SIZE;
-
+        const BLOCK_SIZE = 20;
+        const COLS = canvas.width / BLOCK_SIZE;
+        const ROWS = canvas.height / BLOCK_SIZE;
         const COLORS = ['cyan', 'blue', 'orange', 'yellow', 'green', 'purple', 'red'];
         const SHAPES = [
             [[1, 1, 1, 1]], // I
