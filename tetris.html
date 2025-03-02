@@ -1,90 +1,86 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Тетрис</title>
+    <title>Tetris</title>
     <style>
         body {
+            margin: 0;
+            height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            margin: 0;
             background-color: #f0f0f0;
         }
-        .container {
+        .game-container {
             display: flex;
-            flex-direction: row;
+            flex-direction: column;
             align-items: center;
+        }
+        .menu {
+            text-align: center;
+            margin-bottom: 20px;
         }
         canvas {
             border: 1px solid #000;
             background-color: #fff;
         }
-        .game-menu {
-            text-align: center;
-            margin-right: 20px;
+        .controls {
+            display: none;
+            margin-top: 10px;
         }
-        .game-menu h2 {
-            margin-bottom: 10px;
-            font-size: 20px;
-        }
-        .game-menu button, .controls button {
-            padding: 10px;
-            margin: 5px;
-            font-size: 16px;
+        .controls button {
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
             cursor: pointer;
             border: none;
             border-radius: 5px;
             background-color: #4CAF50;
             color: white;
         }
-        .game-menu button:hover, .controls button:hover {
+        .controls button:hover {
             background-color: #45a049;
         }
-        .controls {
-            display: none;
-            margin-top: 10px;
-        }
         @media (max-width: 600px) {
-            .container {
-                flex-direction: column;
-            }
-            .game-menu {
-                margin-right: 0;
-                margin-bottom: 20px;
-            }
-            canvas {
-                width: 90%;
-                height: auto;
-            }
             .controls {
                 display: grid;
                 grid-template-columns: repeat(3, 1fr);
                 gap: 5px;
-                width: 90%;
+                width: 100%;
             }
+            canvas { width: 90%; }
+        }
+        @media (min-width: 601px) {
+            .game-container {
+                flex-direction: row;
+            }
+            .menu {
+                margin-right: 20px;
+                margin-bottom: 0;
+            }
+            canvas { margin-left: 20px; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="game-menu">
-            <h2>Тетрис</h2>
-            <button onclick="startGame()">Начать игру</button>
-            <button onclick="pauseGame()">Пауза</button>
-            <button onclick="resetGame()">Перезапустить</button>
-            <button onclick="window.location.href='index.html'">Выбрать другую игру</button>
-            <p>Счёт: <span id="score">0</span></p>
-            <div class="controls">
-                <button onclick="moveLeft()">←</button>
-                <button onclick="rotate()">↻</button>
-                <button onclick="moveRight()">→</button>
-                <button onclick="moveDown()">↓</button>
-            </div>
+    <div class="game-container">
+        <div class="menu">
+            <h2>Tetris</h2>
+            <button onclick="startGame()">Start</button>
+            <button onclick="pauseGame()">Pause</button>
+            <button onclick="resetGame()">Reset</button>
+            <button onclick="window.location.href='index.html'">Menu</button>
+            <p>Score: <span id="score">0</span></p>
         </div>
         <canvas id="tetrisCanvas" width="200" height="400"></canvas>
+        <div class="controls">
+            <button onclick="moveLeft()">←</button>
+            <button onclick="rotate()">↻</button>
+            <button onclick="moveRight()">→</button>
+            <button onclick="moveDown()">↓</button>
+        </div>
     </div>
 
     <script>
@@ -107,7 +103,7 @@
         ];
 
         let board = Array(ROWS).fill().map(() => Array(COLS).fill(0));
-        let piece = null, pieceX = 0, pieceY = 0;
+        let piece = null, pieceX = 0, pieceY = 0, pieceColor = 0;
         let score = 0, started = false, paused = false, dropTime = 0;
         const DROP_INTERVAL = 500;
 
@@ -136,10 +132,11 @@
         function spawnPiece() {
             const idx = Math.floor(Math.random() * SHAPES.length);
             piece = SHAPES[idx].map(row => [...row]);
+            pieceColor = idx;
             pieceX = Math.floor(COLS / 2) - Math.floor(piece[0].length / 2);
             pieceY = 0;
             if (checkCollision()) {
-                alert("Игра окончена!");
+                alert("Game Over!");
                 resetGame();
             }
         }
@@ -163,7 +160,7 @@
             for (let y = 0; y < piece.length; y++) {
                 for (let x = 0; x < piece[y].length; x++) {
                     if (piece[y][x] && pieceY + y >= 0) {
-                        board[pieceY + y][pieceX + x] = SHAPES.findIndex(s => s.every((r, i) => r.every((v, j) => v === piece[i][j]))) + 1;
+                        board[pieceY + y][pieceX + x] = pieceColor + 1;
                     }
                 }
             }
@@ -201,7 +198,7 @@
                 }
             }
             if (piece) {
-                ctx.fillStyle = COLORS[SHAPES.findIndex(s => s.every((r, i) => r.every((v, j) => v === piece[i][j])))];
+                ctx.fillStyle = COLORS[pieceColor];
                 for (let y = 0; y < piece.length; y++) {
                     for (let x = 0; x < piece[y].length; x++) {
                         if (piece[y][x]) {
@@ -222,7 +219,6 @@
             requestAnimationFrame(gameLoop);
         }
 
-        // Управление для ПК (клавиатура)
         document.addEventListener('keydown', e => {
             if (!started || paused) return;
             switch (e.key) {
@@ -233,7 +229,6 @@
             }
         });
 
-        // Управление для телефона (сенсорные кнопки)
         function moveLeft() { if (started && !paused) { pieceX--; if (checkCollision()) pieceX++; } }
         function moveRight() { if (started && !paused) { pieceX++; if (checkCollision()) pieceX--; } }
         function moveDown() { if (started && !paused) { drop(); dropTime = performance.now(); } }
