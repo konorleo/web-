@@ -43,6 +43,8 @@
             border-radius: 5px;
             background-color: #4CAF50;
             color: white;
+            width: 50px;
+            height: 50px;
         }
         .menu button:hover, .controls button:hover {
             background-color: #45a049;
@@ -50,10 +52,12 @@
         @media (max-width: 600px) {
             .controls {
                 display: grid;
+                grid-template-columns: repeat(3, 50px);
+                grid-template-rows: repeat(2, 50px);
                 grid-template-areas:
                     ". up ."
-                    "left right"
-                    ". down .";
+                    "left down right";
+                justify-content: center;
                 gap: 0;
                 width: auto;
             }
