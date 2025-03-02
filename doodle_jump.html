@@ -1,87 +1,83 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Doodle Jump</title>
     <style>
         body {
+            margin: 0;
+            height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            margin: 0;
             background-color: #f0f0f0;
         }
-        .container {
+        .game-container {
             display: flex;
-            flex-direction: row;
+            flex-direction: column;
             align-items: center;
+        }
+        .menu {
+            text-align: center;
+            margin-bottom: 20px;
         }
         canvas {
             border: 1px solid #000;
             background-color: #fff;
         }
-        .game-menu {
-            text-align: center;
-            margin-right: 20px;
+        .controls {
+            display: none;
+            margin-top: 10px;
         }
-        .game-menu h2 {
-            margin-bottom: 10px;
-            font-size: 20px;
-        }
-        .game-menu button, .controls button {
-            padding: 10px;
-            margin: 5px;
-            font-size: 16px;
+        .controls button {
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
             cursor: pointer;
             border: none;
             border-radius: 5px;
             background-color: #4CAF50;
             color: white;
         }
-        .game-menu button:hover, .controls button:hover {
+        .controls button:hover {
             background-color: #45a049;
         }
-        .controls {
-            display: none;
-            margin-top: 10px;
-        }
         @media (max-width: 600px) {
-            .container {
-                flex-direction: column;
-            }
-            .game-menu {
-                margin-right: 0;
-                margin-bottom: 20px;
-            }
-            canvas {
-                width: 90%;
-                height: auto;
-            }
             .controls {
                 display: flex;
-                justify-content: space-between;
-                width: 90%;
+                justify-content: space-around;
+                width: 100%;
             }
+            canvas { width: 90%; }
+        }
+        @media (min-width: 601px) {
+            .game-container {
+                flex-direction: row;
+            }
+            .menu {
+                margin-right: 20px;
+                margin-bottom: 0;
+            }
+            canvas { margin-left: 20px; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="game-menu">
+    <div class="game-container">
+        <div class="menu">
             <h2>Doodle Jump</h2>
-            <button onclick="startGame()">Начать игру</button>
-            <button onclick="pauseGame()">Пауза</button>
-            <button onclick="resetGame()">Перезапустить</button>
-            <button onclick="window.location.href='index.html'">Выбрать другую игру</button>
-            <p>Счёт: <span id="score">0</span></p>
-            <div class="controls">
-                <button onclick="moveLeft()">←</button>
-                <button onclick="moveRight()">→</button>
-            </div>
+            <button onclick="startGame()">Start</button>
+            <button onclick="pauseGame()">Pause</button>
+            <button onclick="resetGame()">Reset</button>
+            <button onclick="window.location.href='index.html'">Menu</button>
+            <p>Score: <span id="score">0</span></p>
         </div>
         <canvas id="doodleCanvas" width="300" height="500"></canvas>
+        <div class="controls">
+            <button>←</button>
+            <button>→</button>
+        </div>
     </div>
 
     <script>
@@ -97,18 +93,17 @@
         let player = { x: canvas.width / 2 - PLAYER_WIDTH / 2, y: canvas.height - 50, dy: 0, dx: 0, speed: 5 };
         let platforms = [{ x: canvas.width / 2 - PLATFORM_WIDTH / 2, y: canvas.height - 20, w: PLATFORM_WIDTH, h: PLATFORM_HEIGHT }];
         let score = 0, started = false, paused = false;
+        let tiltHistory = [];
+        const TILT_SMOOTHING = 5;
 
         function startGame() {
             if (!started) {
                 started = true;
                 resetGame();
-                // Запрос разрешения на ориентацию (для iOS)
                 if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
                     DeviceOrientationEvent.requestPermission()
                         .then(response => {
-                            if (response === 'granted') {
-                                window.addEventListener('deviceorientation', handleOrientation);
-                            }
+                            if (response === 'granted') window.addEventListener('deviceorientation', handleOrientation);
                         })
                         .catch(console.error);
                 } else {
@@ -135,7 +130,7 @@
                 const last = platforms[platforms.length - 1];
                 platforms.push({
                     x: Math.random() * (canvas.width - PLATFORM_WIDTH),
-                    y: last.y - (50 + Math.random() * 100),
+                    y: last.y - (50 + Math.random() * 130), // Max 180px apart
                     w: PLATFORM_WIDTH,
                     h: PLATFORM_HEIGHT
                 });
@@ -163,15 +158,15 @@
             platforms.forEach(p => {
                 if (player.dy > 0 && player.x + PLAYER_WIDTH > p.x && player.x < p.x + p.w &&
                     player.y + PLAYER_HEIGHT > p.y && player.y + PLAYER_HEIGHT <= p.y + p.h + player.dy) {
-                    player.dy = -10;
+                    player.dy = -15; // Longer jump
                 }
             });
 
             if (player.y > canvas.height) {
-                alert("Игра окончена!");
+                alert("Game Over!");
                 resetGame();
             }
-            player.dx *= 0.9; // Плавное затухание движения
+            player.dx *= 0.9; // Smooth deceleration
         }
 
         function draw() {
@@ -189,7 +184,32 @@
             requestAnimationFrame(gameLoop);
         }
 
-        // Управление для ПК (клавиатура)
+        function handleOrientation(event) {
+            if (!started || paused) return;
+            const gamma = event.gamma;
+            tiltHistory.push(gamma);
+            if (tiltHistory.length > TILT_SMOOTHING) tiltHistory.shift();
+            const averageGamma = tiltHistory.reduce((a, b) => a + b, 0) / tiltHistory.length;
+            player.dx = averageGamma * 0.1; // Smoother tilt
+        }
+
+        const leftButton = document.querySelector('.controls button:nth-child(1)');
+        const rightButton = document.querySelector('.controls button:nth-child(2)');
+
+        leftButton.addEventListener('touchstart', startMovingLeft);
+        leftButton.addEventListener('touchend', stopMoving);
+        rightButton.addEventListener('touchstart', startMovingRight);
+        rightButton.addEventListener('touchend', stopMoving);
+
+        leftButton.addEventListener('mousedown', startMovingLeft);
+        leftButton.addEventListener('mouseup', stopMoving);
+        rightButton.addEventListener('mousedown', startMovingRight);
+        rightButton.addEventListener('mouseup', stopMoving);
+
+        function startMovingLeft() { if (started && !paused) player.dx = -player.speed; }
+        function startMovingRight() { if (started && !paused) player.dx = player.speed; }
+        function stopMoving() { player.dx = 0; }
+
         document.addEventListener('keydown', e => {
             if (!started || paused) return;
             switch (e.key) {
@@ -198,15 +218,11 @@
             }
         });
 
-        // Управление для телефона (сенсорные кнопки + наклон)
-        function moveLeft() { if (started && !paused) player.dx = -player.speed; }
-        function moveRight() { if (started && !paused) player.dx = player.speed; }
-
-        function handleOrientation(event) {
-            if (!started || paused) return;
-            const gamma = event.gamma; // Наклон влево/вправо (-90 до 90 градусов)
-            player.dx = gamma * 0.3; // Чувствительность наклона
-        }
+        document.addEventListener('keyup', e => {
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') player.dx = 0;
+        });
     </script>
+</body>
+</html>
 </body>
 </html>
