@@ -35,10 +35,9 @@
             text-align: center;
         }
         .menu button, .controls button {
-            width: 70px;
-            height: 70px;
-            font-size: 24px;
+            padding: 10px;
             margin: 5px;
+            font-size: 16px;
             cursor: pointer;
             border: none;
             border-radius: 5px;
@@ -53,11 +52,6 @@
                 display: flex;
                 justify-content: center;
                 gap: 10px;
-            }
-            .menu button {
-                width: 60px;
-                height: 40px;
-                font-size: 16px;
             }
         }
         @media (min-width: 601px) {
@@ -140,7 +134,7 @@
                 const last = platforms[platforms.length - 1];
                 platforms.push({
                     x: Math.random() * (canvas.width - PLATFORM_WIDTH),
-                    y: last.y - (50 + Math.random() * 130),
+                    y: last.y - (50 + Math.random() * 130), // Max gap ~180px
                     w: PLATFORM_WIDTH,
                     h: PLATFORM_HEIGHT
                 });
@@ -168,7 +162,7 @@
             platforms.forEach(p => {
                 if (player.dy > 0 && player.x + PLAYER_WIDTH > p.x && player.x < p.x + p.w &&
                     player.y + PLAYER_HEIGHT > p.y && player.y + PLAYER_HEIGHT <= p.y + p.h + player.dy) {
-                    player.dy = -10;
+                    player.dy = -15; // Jump height ~225px to reach max 180px gap
                 }
             });
 
