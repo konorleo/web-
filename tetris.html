@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tetris</title>
+    <title>Тетрис</title>
     <style>
         body {
             margin: 0;
@@ -17,6 +17,8 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            width: 100%;
+            height: 100%;
         }
         .menu {
             text-align: center;
@@ -25,6 +27,10 @@
         canvas {
             border: 1px solid #000;
             background-color: #fff;
+            width: 100%;
+            height: 100%;
+            max-width: 100vw;
+            max-height: calc(100vh - 200px);
         }
         .controls {
             display: none;
@@ -50,7 +56,6 @@
                 gap: 5px;
                 width: 100%;
             }
-            canvas { width: 90%; }
         }
         @media (min-width: 601px) {
             .game-container {
@@ -67,14 +72,14 @@
 <body>
     <div class="game-container">
         <div class="menu">
-            <h2>Tetris</h2>
-            <button onclick="startGame()">Start</button>
-            <button onclick="pauseGame()">Pause</button>
-            <button onclick="resetGame()">Reset</button>
-            <button onclick="window.location.href='index.html'">Menu</button>
-            <p>Score: <span id="score">0</span></p>
+            <h2>Тетрис</h2>
+            <button onclick="startGame()">Начать</button>
+            <button onclick="pauseGame()">Пауза</button>
+            <button onclick="resetGame()">Сброс</button>
+            <button onclick="window.location.href='index.html'">Меню</button>
+            <p>Счёт: <span id="score">0</span></p>
         </div>
-        <canvas id="tetrisCanvas" width="200" height="400"></canvas>
+        <canvas id="tetrisCanvas"></canvas>
         <div class="controls">
             <button onclick="moveLeft()">←</button>
             <button onclick="rotate()">↻</button>
@@ -88,9 +93,12 @@
         const ctx = canvas.getContext('2d');
         const scoreElement = document.getElementById('score');
 
-        const BLOCK_SIZE = 20;
-        const COLS = canvas.width / BLOCK_SIZE;
-        const ROWS = canvas.height / BLOCK_SIZE;
+        const BLOCK_SIZE = Math.floor(Math.min(window.innerWidth, window.innerHeight - 200) / 20);
+        const COLS = 10;
+        const ROWS = 20;
+        canvas.width = COLS * BLOCK_SIZE;
+        canvas.height = ROWS * BLOCK_SIZE;
+
         const COLORS = ['cyan', 'blue', 'orange', 'yellow', 'green', 'purple', 'red'];
         const SHAPES = [
             [[1, 1, 1, 1]], // I
@@ -136,7 +144,7 @@
             pieceX = Math.floor(COLS / 2) - Math.floor(piece[0].length / 2);
             pieceY = 0;
             if (checkCollision()) {
-                alert("Game Over!");
+                alert("Игра окончена!");
                 resetGame();
             }
         }
