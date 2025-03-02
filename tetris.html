@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Тетрис</title>
+    <title>Tetris</title>
     <style>
         body {
             margin: 0;
@@ -35,9 +35,10 @@
             text-align: center;
         }
         .menu button, .controls button {
-            padding: 10px;
+            width: 70px;
+            height: 70px;
+            font-size: 24px;
             margin: 5px;
-            font-size: 16px;
             cursor: pointer;
             border: none;
             border-radius: 5px;
@@ -53,16 +54,18 @@
                 justify-content: center;
                 gap: 10px;
             }
+            .menu button {
+                width: 60px;
+                height: 40px;
+                font-size: 16px;
+            }
         }
         @media (min-width: 601px) {
             .game-container {
                 flex-direction: row;
                 align-items: center;
             }
-            .menu {
-                margin-right: 20px;
-                padding: 0;
-            }
+            .menu { margin-right: 20px; padding: 0; }
             canvas { margin-left: 20px; }
         }
     </style>
@@ -70,12 +73,12 @@
 <body>
     <div class="game-container">
         <div class="menu">
-            <h2>Тетрис</h2>
-            <button onclick="startGame()">Начать</button>
-            <button onclick="pauseGame()">Пауза</button>
-            <button onclick="resetGame()">Сброс</button>
-            <button onclick="window.location.href='index.html'">Меню</button>
-            <p>Счёт: <span id="score">0</span></p>
+            <h2>Tetris</h2>
+            <button onclick="startGame()">Start</button>
+            <button onclick="pauseGame()">Pause</button>
+            <button onclick="resetGame()">Reset</button>
+            <button onclick="window.location.href='index.html'">Menu</button>
+            <p>Score: <span id="score">0</span></p>
         </div>
         <canvas id="tetrisCanvas" width="200" height="400"></canvas>
         <div class="controls">
@@ -118,9 +121,7 @@
             }
         }
 
-        function pauseGame() {
-            if (started) paused = !paused;
-        }
+        function pauseGame() { if (started) paused = !paused; }
 
         function resetGame() {
             started = false;
@@ -139,7 +140,7 @@
             pieceX = Math.floor(COLS / 2) - Math.floor(piece[0].length / 2);
             pieceY = 0;
             if (checkCollision()) {
-                alert("Игра окончена!");
+                alert("Game Over!");
                 resetGame();
             }
         }
@@ -167,19 +168,23 @@
                     }
                 }
             }
-            clearLines();
+            const linesCleared = clearLines();
+            score += linesCleared * 10; // 1 line = 10, 2 lines = 20, 3 lines = 30, 4 lines = 40
+            scoreElement.textContent = score;
             spawnPiece();
         }
 
         function clearLines() {
+            let linesCleared = 0;
             for (let y = ROWS - 1; y >= 0; y--) {
                 if (board[y].every(cell => cell)) {
                     board.splice(y, 1);
                     board.unshift(Array(COLS).fill(0));
-                    score += 10;
-                    scoreElement.textContent = score;
+                    linesCleared++;
+                    y++;
                 }
             }
+            return linesCleared;
         }
 
         function drop() {
