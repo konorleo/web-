@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -59,7 +59,10 @@
                 flex-direction: row;
                 align-items: center;
             }
-            .menu { margin-right: 20px; padding: 0; }
+            .menu {
+                margin-right: 20px;
+                padding: 0;
+            }
             canvas { margin-left: 20px; }
         }
     </style>
@@ -68,11 +71,11 @@
     <div class="game-container">
         <div class="menu">
             <h2>Doodle Jump</h2>
-            <button onclick="startGame()">Start</button>
-            <button onclick="pauseGame()">Pause</button>
-            <button onclick="resetGame()">Reset</button>
-            <button onclick="window.location.href='index.html'">Menu</button>
-            <p>Score: <span id="score">0</span></p>
+            <button onclick="startGame()">Начать</button>
+            <button onclick="pauseGame()">Пауза</button>
+            <button onclick="resetGame()">Сброс</button>
+            <button onclick="window.location.href='index.html'">Меню</button>
+            <p>Счёт: <span id="score">0</span></p>
         </div>
         <canvas id="doodleCanvas" width="300" height="500"></canvas>
         <div class="controls">
@@ -127,10 +130,11 @@
         function spawnPlatforms() {
             while (platforms.length < 6) {
                 const last = platforms[platforms.length - 1];
-                const type = Math.random() < 0.15 ? 1 : Math.random() < 0.15 ? 2 : 0;
+                const typeChance = Math.random();
+                let type = typeChance < 0.15 ? 1 : typeChance < 0.30 ? 2 : 0; // 15% disappearing, 15% boosting, 70% normal
                 platforms.push({
                     x: Math.random() * (canvas.width - PLATFORM_WIDTH),
-                    y: last.y - (50 + Math.random() * 130),
+                    y: last.y - (50 + Math.random() * 130), // Max gap ~180px
                     w: PLATFORM_WIDTH,
                     h: PLATFORM_HEIGHT,
                     type: type
@@ -156,21 +160,23 @@
                 spawnPlatforms();
             }
 
-            platforms.forEach((p, i) => {
+            for (let i = platforms.length - 1; i >= 0; i--) {
+                const p = platforms[i];
                 if (player.dy > 0 && player.x + PLAYER_WIDTH > p.x && player.x < p.x + p.w &&
                     player.y + PLAYER_HEIGHT > p.y && player.y + PLAYER_HEIGHT <= p.y + p.h + player.dy) {
-                    if (p.type === 1) {
-                        platforms.splice(i, 1); // Disappears
+                    if (p.type === 0) {
+                        player.dy = -15; // Normal jump (~225px)
+                    } else if (p.type === 1) {
+                        player.dy = -15; // Disappearing jump
+                        platforms.splice(i, 1);
                     } else if (p.type === 2) {
-                        player.dy = -25; // 2.5x jump
-                    } else {
-                        player.dy = -10;
+                        player.dy = -37.5; // Boosted jump (2.5x normal, ~562.5px)
                     }
                 }
-            });
+            }
 
             if (player.y > canvas.height) {
-                alert("Game Over!");
+                alert("Игра окончена!");
                 resetGame();
             }
             player.dx *= 0.9;
