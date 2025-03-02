@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Snake</title>
+    <title>Змейка</title>
     <style>
         body {
             margin: 0;
@@ -17,6 +17,8 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            width: 100%;
+            height: 100%;
         }
         .menu {
             text-align: center;
@@ -25,6 +27,10 @@
         canvas {
             border: 1px solid #000;
             background-color: #fff;
+            width: 100%;
+            height: 100%;
+            max-width: 100vw;
+            max-height: calc(100vh - 200px); /* Adjust for menu and controls */
         }
         .controls {
             display: none;
@@ -46,13 +52,18 @@
         @media (max-width: 600px) {
             .controls {
                 display: grid;
-                grid-template-columns: repeat(3, 1fr);
+                grid-template-areas:
+                    ". up ."
+                    "left . right"
+                    ". down .";
                 gap: 5px;
                 width: 100%;
+                padding: 10px;
             }
-            .controls .up { grid-column: 2; }
-            .controls .down { grid-column: 2; }
-            canvas { width: 90%; }
+            .controls .up { grid-area: up; }
+            .controls .left { grid-area: left; }
+            .controls .right { grid-area: right; }
+            .controls .down { grid-area: down; }
         }
         @media (min-width: 601px) {
             .game-container {
@@ -69,18 +80,18 @@
 <body>
     <div class="game-container">
         <div class="menu">
-            <h2>Snake</h2>
-            <button onclick="startGame()">Start</button>
-            <button onclick="pauseGame()">Pause</button>
-            <button onclick="resetGame()">Reset</button>
-            <button onclick="window.location.href='index.html'">Menu</button>
-            <p>Score: <span id="score">0</span></p>
+            <h2>Змейка</h2>
+            <button onclick="startGame()">Начать</button>
+            <button onclick="pauseGame()">Пауза</button>
+            <button onclick="resetGame()">Сброс</button>
+            <button onclick="window.location.href='index.html'">Меню</button>
+            <p>Счёт: <span id="score">0</span></p>
         </div>
-        <canvas id="snakeCanvas" width="300" height="300"></canvas>
+        <canvas id="snakeCanvas"></canvas>
         <div class="controls">
             <button class="up" onclick="moveUp()">↑</button>
-            <button onclick="moveLeft()">←</button>
-            <button onclick="moveRight()">→</button>
+            <button class="left" onclick="moveLeft()">←</button>
+            <button class="right" onclick="moveRight()">→</button>
             <button class="down" onclick="moveDown()">↓</button>
         </div>
     </div>
@@ -91,17 +102,27 @@
         const scoreElement = document.getElementById('score');
 
         const GRID_SIZE = 20;
-        const TILES = canvas.width / GRID_SIZE;
-        let snake = [{ x: 10, y: 10 }];
-        let food = { x: 15, y: 15 };
+        const TILES = Math.floor(Math.min(window.innerWidth, window.innerHeight - 200) / GRID_SIZE);
+        canvas.width = TILES * GRID_SIZE;
+        canvas.height = TILES * GRID_SIZE;
+
+        let snake = [{ x: Math.floor(TILES / 2), y: Math.floor(TILES / 2) }];
+        let food = null;
         let dx = 0, dy = 0;
         let score = 0, started = false, paused = false, moveTime = 0;
         const MOVE_INTERVAL = 150;
+
+        function spawnFood() {
+            do {
+                food = { x: Math.floor(Math.random() * TILES), y: Math.floor(Math.random() * TILES) };
+            } while (snake.some(s => s.x === food.x && s.y === food.y));
+        }
 
         function startGame() {
             if (!started) {
                 started = true;
                 dx = 1;
+                spawnFood();
                 requestAnimationFrame(gameLoop);
             }
         }
@@ -115,8 +136,8 @@
             paused = false;
             score = 0;
             scoreElement.textContent = score;
-            snake = [{ x: 10, y: 10 }];
-            food = { x: 15, y: 15 };
+            snake = [{ x: Math.floor(TILES / 2), y: Math.floor(TILES / 2) }];
+            food = null;
             dx = 0;
             dy = 0;
             moveTime = 0;
@@ -125,17 +146,15 @@
         function move() {
             const head = { x: snake[0].x + dx, y: snake[0].y + dy };
             if (head.x < 0 || head.x >= TILES || head.y < 0 || head.y >= TILES || snake.some(s => s.x === head.x && s.y === head.y)) {
-                alert("Game Over!");
+                alert("Игра окончена!");
                 resetGame();
                 return;
             }
             snake.unshift(head);
-            if (head.x === food.x && head.y === food.y) {
+            if (food && head.x === food.x && head.y === food.y) {
                 score += 1;
                 scoreElement.textContent = score;
-                do {
-                    food = { x: Math.floor(Math.random() * TILES), y: Math.floor(Math.random() * TILES) };
-                } while (snake.some(s => s.x === food.x && s.y === food.y));
+                spawnFood();
             } else {
                 snake.pop();
             }
@@ -145,8 +164,10 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = 'green';
             snake.forEach(s => ctx.fillRect(s.x * GRID_SIZE, s.y * GRID_SIZE, GRID_SIZE - 2, GRID_SIZE - 2));
-            ctx.fillStyle = 'red';
-            ctx.fillRect(food.x * GRID_SIZE, food.y * GRID_SIZE, GRID_SIZE - 2, GRID_SIZE - 2);
+            if (food) {
+                ctx.fillStyle = 'red';
+                ctx.fillRect(food.x * GRID_SIZE, food.y * GRID_SIZE, GRID_SIZE - 2, GRID_SIZE - 2);
+            }
         }
 
         function gameLoop(time) {
