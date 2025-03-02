@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -59,10 +59,7 @@
                 flex-direction: row;
                 align-items: center;
             }
-            .menu {
-                margin-right: 20px;
-                padding: 0;
-            }
+            .menu { margin-right: 20px; padding: 0; }
             canvas { margin-left: 20px; }
         }
     </style>
@@ -71,11 +68,11 @@
     <div class="game-container">
         <div class="menu">
             <h2>Doodle Jump</h2>
-            <button onclick="startGame()">Начать</button>
-            <button onclick="pauseGame()">Пауза</button>
-            <button onclick="resetGame()">Сброс</button>
-            <button onclick="window.location.href='index.html'">Меню</button>
-            <p>Счёт: <span id="score">0</span></p>
+            <button onclick="startGame()">Start</button>
+            <button onclick="pauseGame()">Pause</button>
+            <button onclick="resetGame()">Reset</button>
+            <button onclick="window.location.href='index.html'">Menu</button>
+            <p>Score: <span id="score">0</span></p>
         </div>
         <canvas id="doodleCanvas" width="300" height="500"></canvas>
         <div class="controls">
@@ -95,10 +92,10 @@
         const PLATFORM_HEIGHT = 10;
         const GRAVITY = 0.5;
         let player = { x: canvas.width / 2 - PLAYER_WIDTH / 2, y: canvas.height - 50, dy: 0, dx: 0, speed: 5 };
-        let platforms = [{ x: canvas.width / 2 - PLATFORM_WIDTH / 2, y: canvas.height - 20, w: PLATFORM_WIDTH, h: PLATFORM_HEIGHT }];
+        let platforms = [];
         let score = 0, started = false, paused = false;
         let tiltHistory = [];
-        const TILT_SMOOTHING = 5;
+        const TILT_SMOOTHING = 10;
 
         function startGame() {
             if (!started) {
@@ -117,26 +114,26 @@
             }
         }
 
-        function pauseGame() {
-            if (started) paused = !paused;
-        }
+        function pauseGame() { if (started) paused = !paused; }
 
         function resetGame() {
             score = 0;
             scoreElement.textContent = score;
             player = { x: canvas.width / 2 - PLAYER_WIDTH / 2, y: canvas.height - 50, dy: 0, dx: 0, speed: 5 };
-            platforms = [{ x: canvas.width / 2 - PLATFORM_WIDTH / 2, y: canvas.height - 20, w: PLATFORM_WIDTH, h: PLATFORM_HEIGHT }];
+            platforms = [{ x: canvas.width / 2 - PLATFORM_WIDTH / 2, y: canvas.height - 20, w: PLATFORM_WIDTH, h: PLATFORM_HEIGHT, type: 0 }];
             spawnPlatforms();
         }
 
         function spawnPlatforms() {
             while (platforms.length < 6) {
                 const last = platforms[platforms.length - 1];
+                const type = Math.random() < 0.15 ? 1 : Math.random() < 0.15 ? 2 : 0;
                 platforms.push({
                     x: Math.random() * (canvas.width - PLATFORM_WIDTH),
-                    y: last.y - (50 + Math.random() * 130), // Max gap ~180px
+                    y: last.y - (50 + Math.random() * 130),
                     w: PLATFORM_WIDTH,
-                    h: PLATFORM_HEIGHT
+                    h: PLATFORM_HEIGHT,
+                    type: type
                 });
             }
         }
@@ -159,15 +156,21 @@
                 spawnPlatforms();
             }
 
-            platforms.forEach(p => {
+            platforms.forEach((p, i) => {
                 if (player.dy > 0 && player.x + PLAYER_WIDTH > p.x && player.x < p.x + p.w &&
                     player.y + PLAYER_HEIGHT > p.y && player.y + PLAYER_HEIGHT <= p.y + p.h + player.dy) {
-                    player.dy = -15; // Jump height ~225px to reach max 180px gap
+                    if (p.type === 1) {
+                        platforms.splice(i, 1); // Disappears
+                    } else if (p.type === 2) {
+                        player.dy = -25; // 2.5x jump
+                    } else {
+                        player.dy = -10;
+                    }
                 }
             });
 
             if (player.y > canvas.height) {
-                alert("Игра окончена!");
+                alert("Game Over!");
                 resetGame();
             }
             player.dx *= 0.9;
@@ -175,8 +178,10 @@
 
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = 'green';
-            platforms.forEach(p => ctx.fillRect(p.x, p.y, p.w, p.h));
+            platforms.forEach(p => {
+                ctx.fillStyle = p.type === 0 ? 'green' : p.type === 1 ? 'red' : 'yellow';
+                ctx.fillRect(p.x, p.y, p.w, p.h);
+            });
             ctx.fillStyle = 'blue';
             ctx.fillRect(player.x, player.y, PLAYER_WIDTH, PLAYER_HEIGHT);
         }
