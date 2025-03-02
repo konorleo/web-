@@ -1,92 +1,88 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Змейка</title>
+    <title>Snake</title>
     <style>
         body {
+            margin: 0;
+            height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            margin: 0;
             background-color: #f0f0f0;
         }
-        .container {
+        .game-container {
             display: flex;
-            flex-direction: row;
+            flex-direction: column;
             align-items: center;
+        }
+        .menu {
+            text-align: center;
+            margin-bottom: 20px;
         }
         canvas {
             border: 1px solid #000;
             background-color: #fff;
         }
-        .game-menu {
-            text-align: center;
-            margin-right: 20px;
+        .controls {
+            display: none;
+            margin-top: 10px;
         }
-        .game-menu h2 {
-            margin-bottom: 10px;
-            font-size: 20px;
-        }
-        .game-menu button, .controls button {
-            padding: 10px;
-            margin: 5px;
-            font-size: 16px;
+        .controls button {
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
             cursor: pointer;
             border: none;
             border-radius: 5px;
             background-color: #4CAF50;
             color: white;
         }
-        .game-menu button:hover, .controls button:hover {
+        .controls button:hover {
             background-color: #45a049;
         }
-        .controls {
-            display: none;
-            margin-top: 10px;
-        }
         @media (max-width: 600px) {
-            .container {
-                flex-direction: column;
-            }
-            .game-menu {
-                margin-right: 0;
-                margin-bottom: 20px;
-            }
-            canvas {
-                width: 90%;
-                height: auto;
-            }
             .controls {
                 display: grid;
                 grid-template-columns: repeat(3, 1fr);
                 gap: 5px;
-                width: 90%;
+                width: 100%;
             }
             .controls .up { grid-column: 2; }
             .controls .down { grid-column: 2; }
+            canvas { width: 90%; }
+        }
+        @media (min-width: 601px) {
+            .game-container {
+                flex-direction: row;
+            }
+            .menu {
+                margin-right: 20px;
+                margin-bottom: 0;
+            }
+            canvas { margin-left: 20px; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="game-menu">
-            <h2>Змейка</h2>
-            <button onclick="startGame()">Начать игру</button>
-            <button onclick="pauseGame()">Пауза</button>
-            <button onclick="resetGame()">Перезапустить</button>
-            <button onclick="window.location.href='index.html'">Выбрать другую игру</button>
-            <p>Счёт: <span id="score">0</span></p>
-            <div class="controls">
-                <button class="up" onclick="moveUp()">↑</button>
-                <button onclick="moveLeft()">←</button>
-                <button onclick="moveRight()">→</button>
-                <button class="down" onclick="moveDown()">↓</button>
-            </div>
+    <div class="game-container">
+        <div class="menu">
+            <h2>Snake</h2>
+            <button onclick="startGame()">Start</button>
+            <button onclick="pauseGame()">Pause</button>
+            <button onclick="resetGame()">Reset</button>
+            <button onclick="window.location.href='index.html'">Menu</button>
+            <p>Score: <span id="score">0</span></p>
         </div>
         <canvas id="snakeCanvas" width="300" height="300"></canvas>
+        <div class="controls">
+            <button class="up" onclick="moveUp()">↑</button>
+            <button onclick="moveLeft()">←</button>
+            <button onclick="moveRight()">→</button>
+            <button class="down" onclick="moveDown()">↓</button>
+        </div>
     </div>
 
     <script>
@@ -129,7 +125,7 @@
         function move() {
             const head = { x: snake[0].x + dx, y: snake[0].y + dy };
             if (head.x < 0 || head.x >= TILES || head.y < 0 || head.y >= TILES || snake.some(s => s.x === head.x && s.y === head.y)) {
-                alert("Игра окончена!");
+                alert("Game Over!");
                 resetGame();
                 return;
             }
@@ -163,7 +159,6 @@
             requestAnimationFrame(gameLoop);
         }
 
-        // Управление для ПК (клавиатура)
         document.addEventListener('keydown', e => {
             if (!started || paused) return;
             switch (e.key) {
@@ -174,7 +169,6 @@
             }
         });
 
-        // Управление для телефона (сенсорные кнопки)
         function moveUp() { if (started && !paused && dy !== 1) { dx = 0; dy = -1; } }
         function moveDown() { if (started && !paused && dy !== -1) { dx = 0; dy = 1; } }
         function moveLeft() { if (started && !paused && dx !== 1) { dx = -1; dy = 0; } }
