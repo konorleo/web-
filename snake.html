@@ -13,6 +13,11 @@
             margin: 0;
             background-color: #f0f0f0;
         }
+        .container {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+        }
         canvas {
             border: 1px solid #000;
             background-color: #fff;
@@ -25,7 +30,7 @@
             margin-bottom: 10px;
             font-size: 20px;
         }
-        .game-menu button {
+        .game-menu button, .controls button {
             padding: 10px;
             margin: 5px;
             font-size: 16px;
@@ -35,11 +40,15 @@
             background-color: #4CAF50;
             color: white;
         }
-        .game-menu button:hover {
+        .game-menu button:hover, .controls button:hover {
             background-color: #45a049;
         }
+        .controls {
+            display: none;
+            margin-top: 10px;
+        }
         @media (max-width: 600px) {
-            body {
+            .container {
                 flex-direction: column;
             }
             .game-menu {
@@ -50,19 +59,35 @@
                 width: 90%;
                 height: auto;
             }
+            .controls {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 5px;
+                width: 90%;
+            }
+            .controls .up { grid-column: 2; }
+            .controls .down { grid-column: 2; }
         }
     </style>
 </head>
 <body>
-    <div class="game-menu">
-        <h2>Змейка</h2>
-        <button onclick="startGame()">Начать игру</button>
-        <button onclick="pauseGame()">Пауза</button>
-        <button onclick="resetGame()">Перезапустить</button>
-        <button onclick="window.location.href='index.html'">Выбрать другую игру</button>
-        <p>Счёт: <span id="score">0</span></p>
+    <div class="container">
+        <div class="game-menu">
+            <h2>Змейка</h2>
+            <button onclick="startGame()">Начать игру</button>
+            <button onclick="pauseGame()">Пауза</button>
+            <button onclick="resetGame()">Перезапустить</button>
+            <button onclick="window.location.href='index.html'">Выбрать другую игру</button>
+            <p>Счёт: <span id="score">0</span></p>
+            <div class="controls">
+                <button class="up" onclick="moveUp()">↑</button>
+                <button onclick="moveLeft()">←</button>
+                <button onclick="moveRight()">→</button>
+                <button class="down" onclick="moveDown()">↓</button>
+            </div>
+        </div>
+        <canvas id="snakeCanvas" width="300" height="300"></canvas>
     </div>
-    <canvas id="snakeCanvas" width="300" height="300"></canvas>
 
     <script>
         const canvas = document.getElementById('snakeCanvas');
@@ -138,15 +163,22 @@
             requestAnimationFrame(gameLoop);
         }
 
+        // Управление для ПК (клавиатура)
         document.addEventListener('keydown', e => {
             if (!started || paused) return;
             switch (e.key) {
-                case 'ArrowUp': if (dy !== 1) { dx = 0; dy = -1; } break;
-                case 'ArrowDown': if (dy !== -1) { dx = 0; dy = 1; } break;
-                case 'ArrowLeft': if (dx !== 1) { dx = -1; dy = 0; } break;
-                case 'ArrowRight': if (dx !== -1) { dx = 1; dy = 0; } break;
+                case 'ArrowUp': moveUp(); break;
+                case 'ArrowDown': moveDown(); break;
+                case 'ArrowLeft': moveLeft(); break;
+                case 'ArrowRight': moveRight(); break;
             }
         });
+
+        // Управление для телефона (сенсорные кнопки)
+        function moveUp() { if (started && !paused && dy !== 1) { dx = 0; dy = -1; } }
+        function moveDown() { if (started && !paused && dy !== -1) { dx = 0; dy = 1; } }
+        function moveLeft() { if (started && !paused && dx !== 1) { dx = -1; dy = 0; } }
+        function moveRight() { if (started && !paused && dx !== -1) { dx = 1; dy = 0; } }
     </script>
 </body>
 </html>
