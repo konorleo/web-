@@ -1,9 +1,23 @@
+Прошу прощения за неудобства! Я разберусь с проблемами в Змейке (пропавшие кнопки) и Doodle Jump (сломанные прыжки). Вот что я сделаю:
+
+Змейка: Кнопки пропали из-за ошибки в CSS или логике отображения. Я верну их, убедившись, что они видны и правильно расположены внизу экрана на мобильных устройствах в форме креста (↑ вверху, ← слева, → справа, ↓ внизу).
+Doodle Jump: Прыжки сломались, возможно, из-за неправильной обработки типов платформ или логики столкновений. Я пересмотрю код, чтобы прыжки работали корректно для всех типов платформ (обычных, исчезающих и усиливающих).
+Ниже обновленные версии только для Змейки и Doodle Jump, так как с Тетрисом проблем не указано. Если что-то нужно исправить в Тетрисе, дайте знать!
+
+Змейка (snake.html)
+Проблема: Кнопки пропали.
+Решение: Убедимся, что .controls отображается на мобильных устройствах через @media, и исправим стили для корректного отображения кнопок.
+
+html
+Предпросмотр
+Перенос
+Копировать
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Snake</title>
+    <title>Змейка</title>
     <style>
         body {
             margin: 0;
@@ -52,12 +66,13 @@
         @media (max-width: 600px) {
             .controls {
                 display: grid;
+                grid-template-columns: repeat(3, 50px);
+                grid-template-rows: repeat(2, 50px);
                 grid-template-areas:
                     ". up ."
-                    "left right"
-                    ". down .";
+                    "left down right";
+                justify-content: center;
                 gap: 0;
-                width: auto;
             }
             .controls .up { grid-area: up; }
             .controls .left { grid-area: left; }
@@ -69,7 +84,10 @@
                 flex-direction: row;
                 align-items: center;
             }
-            .menu { margin-right: 20px; padding: 0; }
+            .menu {
+                margin-right: 20px;
+                padding: 0;
+            }
             canvas { margin-left: 20px; }
         }
     </style>
@@ -77,12 +95,12 @@
 <body>
     <div class="game-container">
         <div class="menu">
-            <h2>Snake</h2>
-            <button onclick="startGame()">Start</button>
-            <button onclick="pauseGame()">Pause</button>
-            <button onclick="resetGame()">Reset</button>
-            <button onclick="window.location.href='index.html'">Menu</button>
-            <p>Score: <span id="score">0</span></p>
+            <h2>Змейка</h2>
+            <button onclick="startGame()">Начать</button>
+            <button onclick="pauseGame()">Пауза</button>
+            <button onclick="resetGame()">Сброс</button>
+            <button onclick="window.location.href='index.html'">Меню</button>
+            <p>Счёт: <span id="score">0</span></p>
         </div>
         <canvas id="snakeCanvas" width="300" height="300"></canvas>
         <div class="controls">
@@ -100,8 +118,8 @@
 
         const GRID_SIZE = 20;
         const TILES = canvas.width / GRID_SIZE;
-        const ANIMATION_DURATION = 150; // Animation duration in ms
-        const MOVE_INTERVAL = 150; // Time between moves in ms
+        const ANIMATION_DURATION = 150;
+        const MOVE_INTERVAL = 150;
         let snake = [{ x: 10, y: 10 }];
         let food = null;
         let dx = 0, dy = 0;
@@ -143,7 +161,7 @@
         function move() {
             const head = { x: snake[0].x + dx, y: snake[0].y + dy };
             if (head.x < 0 || head.x >= TILES || head.y < 0 || head.y >= TILES || snake.some(s => s.x === head.x && s.y === head.y)) {
-                alert("Game Over!");
+                alert("Игра окончена!");
                 resetGame();
                 return;
             }
