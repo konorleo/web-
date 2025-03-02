@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Змейка</title>
+    <title>Snake</title>
     <style>
         body {
             margin: 0;
@@ -52,12 +52,10 @@
         @media (max-width: 600px) {
             .controls {
                 display: grid;
-                grid-template-columns: repeat(3, 50px);
-                grid-template-rows: repeat(2, 50px);
                 grid-template-areas:
                     ". up ."
-                    "left down right";
-                justify-content: center;
+                    "left right"
+                    ". down .";
                 gap: 0;
                 width: auto;
             }
@@ -71,10 +69,7 @@
                 flex-direction: row;
                 align-items: center;
             }
-            .menu {
-                margin-right: 20px;
-                padding: 0;
-            }
+            .menu { margin-right: 20px; padding: 0; }
             canvas { margin-left: 20px; }
         }
     </style>
@@ -82,12 +77,12 @@
 <body>
     <div class="game-container">
         <div class="menu">
-            <h2>Змейка</h2>
-            <button onclick="startGame()">Начать</button>
-            <button onclick="pauseGame()">Пауза</button>
-            <button onclick="resetGame()">Сброс</button>
-            <button onclick="window.location.href='index.html'">Меню</button>
-            <p>Счёт: <span id="score">0</span></p>
+            <h2>Snake</h2>
+            <button onclick="startGame()">Start</button>
+            <button onclick="pauseGame()">Pause</button>
+            <button onclick="resetGame()">Reset</button>
+            <button onclick="window.location.href='index.html'">Menu</button>
+            <p>Score: <span id="score">0</span></p>
         </div>
         <canvas id="snakeCanvas" width="300" height="300"></canvas>
         <div class="controls">
@@ -105,11 +100,14 @@
 
         const GRID_SIZE = 20;
         const TILES = canvas.width / GRID_SIZE;
+        const ANIMATION_DURATION = 150; // Animation duration in ms
+        const MOVE_INTERVAL = 150; // Time between moves in ms
         let snake = [{ x: 10, y: 10 }];
         let food = null;
         let dx = 0, dy = 0;
-        let score = 0, started = false, paused = false, moveTime = 0;
-        const MOVE_INTERVAL = 150;
+        let score = 0, started = false, paused = false;
+        let lastTime = 0;
+        let snakePositions = snake.map(s => ({ x: s.x * GRID_SIZE, y: s.y * GRID_SIZE }));
 
         function spawnFood() {
             do {
@@ -122,13 +120,12 @@
                 started = true;
                 dx = 1;
                 if (!food) spawnFood();
+                lastTime = performance.now();
                 requestAnimationFrame(gameLoop);
             }
         }
 
-        function pauseGame() {
-            if (started) paused = !paused;
-        }
+        function pauseGame() { if (started) paused = !paused; }
 
         function resetGame() {
             started = false;
@@ -136,16 +133,17 @@
             score = 0;
             scoreElement.textContent = score;
             snake = [{ x: 10, y: 10 }];
+            snakePositions = snake.map(s => ({ x: s.x * GRID_SIZE, y: s.y * GRID_SIZE }));
             food = null;
             dx = 0;
             dy = 0;
-            moveTime = 0;
+            lastTime = 0;
         }
 
         function move() {
             const head = { x: snake[0].x + dx, y: snake[0].y + dy };
             if (head.x < 0 || head.x >= TILES || head.y < 0 || head.y >= TILES || snake.some(s => s.x === head.x && s.y === head.y)) {
-                alert("Игра окончена!");
+                alert("Game Over!");
                 resetGame();
                 return;
             }
@@ -157,12 +155,23 @@
             } else {
                 snake.pop();
             }
+            snakePositions = snake.map(s => ({ x: s.x * GRID_SIZE, y: s.y * GRID_SIZE }));
         }
 
-        function draw() {
+        function drawSnake(currentTime) {
+            const deltaTime = currentTime - lastTime;
+            const progress = Math.min(deltaTime / ANIMATION_DURATION, 1);
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = 'green';
-            snake.forEach(s => ctx.fillRect(s.x * GRID_SIZE, s.y * GRID_SIZE, GRID_SIZE - 2, GRID_SIZE - 2));
+            snake.forEach((s, i) => {
+                const targetX = snakePositions[i].x;
+                const targetY = snakePositions[i].y;
+                const prevX = i === 0 ? targetX - dx * GRID_SIZE * (1 - progress) : snakePositions[i - 1].x;
+                const prevY = i === 0 ? targetY - dy * GRID_SIZE * (1 - progress) : snakePositions[i - 1].y;
+                const currentX = prevX + (targetX - prevX) * progress;
+                const currentY = prevY + (targetY - prevY) * progress;
+                ctx.fillRect(currentX, currentY, GRID_SIZE - 2, GRID_SIZE - 2);
+            });
             if (food) {
                 ctx.fillStyle = 'red';
                 ctx.fillRect(food.x * GRID_SIZE, food.y * GRID_SIZE, GRID_SIZE - 2, GRID_SIZE - 2);
@@ -171,11 +180,11 @@
 
         function gameLoop(time) {
             if (!started || paused) return requestAnimationFrame(gameLoop);
-            if (time - moveTime >= MOVE_INTERVAL) {
+            drawSnake(time);
+            if (time - lastTime >= MOVE_INTERVAL) {
                 move();
-                moveTime = time;
+                lastTime = time;
             }
-            draw();
             requestAnimationFrame(gameLoop);
         }
 
