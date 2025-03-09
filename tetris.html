@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tetris</title>
+    <title>Тетрис</title>
     <style>
         body {
             margin: 0;
@@ -12,42 +12,55 @@
             justify-content: center;
             align-items: center;
             background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+            color: #333;
             overflow: hidden;
         }
+
         .game-container {
             display: flex;
             flex-direction: column;
             align-items: center;
             width: 100%;
         }
+
         .menu {
             text-align: center;
             padding: 10px;
         }
+
         canvas {
             border: 1px solid #000;
             background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
+
         .controls {
             display: none;
             padding: 10px;
             width: 100%;
             text-align: center;
         }
+
         .menu button, .controls button {
-            width: 70px;
-            height: 70px;
-            font-size: 24px;
-            margin: 5px;
-            cursor: pointer;
-            border: none;
-            border-radius: 5px;
             background-color: #4CAF50;
             color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s ease;
+            margin: 5px;
         }
+
         .menu button:hover, .controls button:hover {
             background-color: #45a049;
         }
+
         @media (max-width: 600px) {
             .controls {
                 display: flex;
@@ -55,18 +68,24 @@
                 gap: 10px;
             }
             .menu button {
-                width: 60px;
-                height: 40px;
-                font-size: 16px;
+                width: 50px;
+                height: 50px;
+                font-size: 18px;
             }
         }
+
         @media (min-width: 601px) {
             .game-container {
                 flex-direction: row;
                 align-items: center;
             }
-            .menu { margin-right: 20px; padding: 0; }
-            canvas { margin-left: 20px; }
+            .menu {
+                margin-right: 20px;
+                padding: 0;
+            }
+            canvas {
+                margin-left: 20px;
+            }
         }
     </style>
 </head>
